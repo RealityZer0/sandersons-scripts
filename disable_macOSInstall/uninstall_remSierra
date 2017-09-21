@@ -1,0 +1,23 @@
+#!/bin/sh
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+remSierrald="/Library/LaunchDaemons/com.domain.removeSierra.plist"
+remSierra="/usr/local/scripts/noSierra/removeSierra"
+noSierra="/usr/local/scripts/noSierra/noSierra.app"
+
+
+launchctl unload "$remSierrald" 2>/dev/null
+launchctl stop "$remSierrald" 2>/dev/null
+chflags noschg "$remSierrald" 2>/dev/null
+chflags noschg "$remSierra" 2>/dev/null
+chflags noschg "$noSierra" 2>/dev/null
+
+rm -r "$remSierrald" 2>/dev/null
+rm -r "$remSierra" 2>/dev/null
+rm -r "$noSierra" 2>/dev/null
+
+exit 0

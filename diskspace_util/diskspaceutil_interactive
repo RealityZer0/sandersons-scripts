@@ -1,0 +1,176 @@
+#!/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+USERNAME="$(ls -la /dev/console | awk '{print $3}')"
+MacHDD="$(diskutil list | awk '/Macintosh HD/ {print $7}')"
+ADS="$(df -lh | grep "$MacHDD" | awk '{print $4}'| tr -d \Gi)"
+ADSFull="$(df -lh | grep "$MacHDD" | awk '{print $4}')"
+VarLogX="$(find /var/log/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \))"
+LibLogX="$(find /Library/logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \))"
+UserLogX="$(find /Users/$USERNAME/Library/Logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \))"
+DarUser="$(sudo -u "$USERNAME" getconf DARWIN_USER_DIR)"
+DarUserSPACE="$(du -h -d 1 $DarUser | awk 'END {print $1}')"
+DarUserTemp="$(sudo -u "$USERNAME" getconf DARWIN_USER_TEMP_DIR)"
+DarUserTempSPACE="$(du -h -d 1 $DarUserTemp | awk 'END {print $1}')"
+DarUserCaches="$(sudo -u "$USERNAME" getconf DARWIN_USER_CACHE_DIR)"
+DarUserCachesSPACE="$(du -h -d 1 $DarUserCaches | awk 'END {print $1}')"
+LibCaches="/Library/Caches"
+LibCachesSPACE="$(du -h -d 1 $LibCaches | awk 'END {print $1}')" #"Deleting", $1, "of disk SPACE from /Library/Caches"}')"
+UserLibCaches="/Users/$USERNAME/Library/Caches"
+UserLibCachesSPACE="$(du -h -d 1 $UserLibCaches | awk 'END {print $1}')" #"Deleting", $1, "of disk SPACE from ~/Library/Caches"}')"
+PvtTmp="/private/tmp"
+PvtTmpSPACE="$(du -h -d 1 $PvtTmp| awk 'END {print $1}')" #"Deleting", $1, "of disk SPACE from /private/tmp"}')"
+UserTrash="/Users/$USERNAME/.Trash"
+UserTrashSPACE="$(du -h -d 1 $UserTrash | awk 'END {print $1}')" #"Deleting", $1, "of disk SPACE from Trash"}')"
+TodayDate=$(date "+%m%d%Y")
+TodayTime=$(date "+%H%M%S")
+
+Domain_Banner() {
+	clear
+	printf "\t\t\t\t"
+	for i in {136,178,220,226}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\e[48;5;226;38;5;0mDomain OS X Disk SPACE Utility\e[0m"
+	for i in {226,220,178,136}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\n\n\n"
+}
+
+Section_Banner_Blue() {
+	for i in {16..21}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\e[48;5;21;38;5;15m$1\e[0m"
+	for i in {21..16}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\n\n"
+}
+
+Section_Banner_Green() {
+	for i in {40,34,28,22}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\e[48;5;22;38;5;15m$1\e[0m"
+	for i in {22,28,34,40}; do printf "\e[48;5;${i}m \e[0m" ; done
+	printf "\n\n"
+}
+# Exit if root or macadmin is logged in
+if [[ $USERNAME = "root" || $USERNAME = "admin" ]]; then
+  echo "Exiting disk SPACE cleaner script for $1 logging in."
+  exit 1
+fi
+# Check available disk space
+Domain_Banner
+Section_Banner_Blue "\e[5m Checking disk space..."
+if [[ "$ADS" -lt 20 ]]; then
+	echo "Not enough disk space..."
+	echo "Required disk space is 20Gi, free disk space is $ADSFull."
+	# Run standard maintenance tasks
+	echo "Performing periodic maintenance"
+	periodic daily weekly monthly
+	sleep 2
+	echo "Maintenance checks complete"
+	echo "Removing extraneous logs from /var/log"
+	#newsyslog -F /var/log/system.log
+	find /var/log/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete
+	echo "Removing extraneous logs from /Library/logs"
+	find /Library/logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete
+	echo "Removing extraneous logs from /Users/$USERNAME/logs"
+	find /Users/$USERNAME/Library/Logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete	
+else
+	echo "Sufficient disk space available. Exiting."
+	exit 0
+fi
+
+# Clean /Library/Caches , ~/Library/Caches, /private/tmp and .Trash
+
+temp_check() {
+	clear
+		TC_CHOICE=""
+		while [ "$TC_CHOICE" != y ]; do
+			Section_Banner_Green "Checking temporary files and Trash for disk space used.."
+			printf "\n\n"
+			printf "\e[1m Darwin User directory \e[0m\n\n"
+			printf "\e[4m$DarUser\e[24m USED SPACE \e[41;97m $DarUserSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m Darwin User Temporary directory \e[0m\n\n"
+			printf "\e[4m$DarUserTemp\e[24m USED SPACE \e[41;97m $DarUserTempSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m Darwin User Cache directory \e[0m\n\n"
+			printf "\e[4m$DarUserCaches\e[24m USED SPACE \e[41;97m $DarUserCachesSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m Library Caches directory \e[0m\n\n"
+			printf "\e[4m$LibCaches\e[24m USED SPACE \e[41;97m $LibCachesSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m User's Library Caches directory \e[0m\n\n"
+			printf "\e[4m$UserLibCaches\e[24m USED SPACE \e[41;97m $UserLibCachesSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m Temp directory \e[0m\n\n"
+			printf "\e[4m$PvtTmp\e[24m USED SPACE \e[41;97m $PvtTmpSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1m User's Trash directory \e[0m\n\n"
+			printf "\e[4m$UserTrash\e[24m USED SPACE \e[41;97m $UserTrashSPACE \e[0m"
+			printf "\n\n"
+			printf "\e[1;4m Would you like to free up disk space by purging temporary files, caches and trash?\e[0m"
+			read -n 1 -p "(y/n):" TC_CHOICE
+			if [ "$TC_CHOICE" = y ]; then
+				printf "\n\n"
+				echo "Clearing $DarUserSPACE of disk space from $DarUser"
+				rm -rf $DarUser/*
+				echo "Clearing $DarUserTempSPACE of disk space from $DarUserTemp"
+				rm -rf $DarUserTemp/*
+				echo "Clearing $DarUserCachesSPACE of disk space from $DarUserCaches"
+				rm -rf $DarUserCaches/*
+				echo "Clearing $LibCachesSPACE of disk space from $LibCaches"
+				rm -rf /Library/Caches/*
+				echo "Clearing $UserLibCachesSPACE of disk space from $UserLibCaches"
+				rm -rf /Users/"$USERNAME"/Library/Caches/*
+				echo "Clearing $PvtTmpSPACE of disk space from $PvtTmp"
+				rm -rf /private/tmp/*
+				echo "Clearing $UserTrashSPACE of disk space from $UserTrash"
+				rm -rf /Users/"$USERNAME"/.Trash/*
+			elif [ "$TC_CHOICE" = n ]; then
+				printf "\n\n"
+				clear
+				Section_Banner_Blue "You answered NO....Exiting\e[0m\n\n"
+				sleep 2
+				clear
+				exit 0
+			else
+				echo "  \"$TC_CHOICE\" is not a valid entry."
+			fi
+		done
+}
+
+du_check() {
+	DU_CHOICE=""
+	while [ "$DU_CHOICE" != y ]; do
+		printf "\e[1;4m Would you like to run the DU command?\e[0m"
+		read -n 1 -p "(y/n):" DU_CHOICE
+		if [ "$DU_CHOICE" = y ]; then
+			printf "\n\n"
+			Section_Banner_Green "Running DU command on /Users/$USERNAME.."
+			printf "\n"
+			Section_Banner_Green "Exporting file to /Users/$USERNAME/Desktop.."
+			du -h -d 1 /Users/$USERNAME > /Users/$USERNAME/Desktop/"du_$USERNAME_$TodayDate-$TodayTime.txt"
+		elif [ "$DU_CHOICE" = n ]; then
+			printf "\n\n"
+			clear
+			Section_Banner_Blue "You answered NO....Exiting\e[0m"
+			sleep 2
+			clear
+			exit 0
+		else
+			echo "  \"$DU_CHOICE\" is not a valid entry."
+		fi
+	done
+}
+
+
+temp_check
+if [[ "$ADS" -gt 20 ]]; then
+	printf "\n\n"
+	printf "Congratulaitons! Available disk space is now at $ADSFull."
+else
+	printf "\n\n"
+	printf "\e[41;97mWarning! Available disk space is at $ADSFull.\e[0m\n\n"
+	printf "Please consider backing up and deleting files stored in the /Users/$USERNAME directory.\e[0m\n\n"
+	printf "We recommend using the du command to locate directories that are consuming large amounts of disk space.\e[0m\n\n"
+fi
+du_check
+
+exit 0

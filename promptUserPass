@@ -1,0 +1,14 @@
+#!/bin/bash
+
+user=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser;import sys;username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0];username = [username,""][username in [u"loginwindow", None, u""]];sys.stdout.write(username + "\n");')
+pass=$(osascript -e 'display dialog "Enter password:" default answer "" giving up after 60 with text buttons {"Authenticate"} default button 1 with hidden answer' -e 'return text returned of result')
+
+attempts=1
+until dscl . authonly "$user" "$pass" &>/dev/null ; do
+	# lines 9 and 10 are only necessary if you wish to display no. of attempts remaining before failure
+	attemptsRemaining=$(( 4 - attempts ))
+	[[ $attemptsRemaining -eq 1 ]] && s= || s=s
+	pass=$(osascript -e 'display dialog "Incorrect password, please try again. ('"$attemptsRemaining"' attempt'"$s"' remaining)" default answer "" giving up after 60 with text buttons {"Authenticate"} default button 1 with hidden answer' -e 'return text returned of result')
+	let attempts++
+	(( attempts > 3 )) && exit 77
+done

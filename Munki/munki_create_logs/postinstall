@@ -1,0 +1,7 @@
+#!/bin/sh
+
+SOURCE="/private/tmp/munkilogs"
+
+/bin/mkdir -p /usr/local/corp/tools &>/dev/null
+/bin/cp ${SOURCE}/CreateMunkiLogs /usr/local/corp/tools/ &>/dev/null
+/bin/rm -rf ${SOURCE} &>/dev/null

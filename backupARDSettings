@@ -1,0 +1,50 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: auto_adbind
+# SYNOPSIS: Rebind unbound hosts to Active Directory
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson
+# Creation Date
+# Revised by Scott Anderson
+# Revision Date 4/22/16
+#$1: Full Path to Package
+#$2: Full Path to target installation directory: /Applications
+#$3: Mountpoint of installation disk: / or /Volumes/External_Drive
+#$4: Root directory of currently booted system
+
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+UserName="$(ls -la /dev/console | awk '{print $3}')"
+Today=$(date "+%m%d%Y")
+Time=$(date "+%H%M%S")
+ARD_bup="$3/Users/$UserName/dev/Projects/Resources/ARD_BUP/$Today$Time-ARDBackup"
+ARD_db="/var/db/RemoteManagement"
+ARD_lib="/Library/Preferences/com.apple.RemoteDesktop.plist"
+ARD_usr="/Users/sa8678/Library/Preferences/com.apple.RemoteDesktop.plist"
+ARD_appsprt="/Library/Application Support/Apple/Remote Desktop/"
+ARD_usr_appsprt="/Users/sa8678/Library/Application Support/Remote Desktop/"
+#==========#
+killall "Remote Desktop"
+mkdir -p $3/Users/$UserName/dev/Projects/Resources/ARD_BUP/$Today$Time-ARDBackup
+rsync -avzR "$ARD_db" "$ARD_bup"
+sleep 2
+rsync -avzR "$ARD_lib" "$ARD_bup"
+sleep 2
+rsync -avzR "$ARD_usr" "$ARD_bup"
+sleep 2
+rsync -avzR "$ARD_appsprt" "$ARD_bup"
+sleep 2
+rsync -avzR "$ARD_usr_appsprt" "$ARD_bup"
+sleep 2
+echo "Copy complete."

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+declare -x SearchDomains="empty"
+
+OLDIFS="$IFS"
+     IFS=$'\n'
+
+declare -x nserviceslist=( $(/usr/sbin/networksetup -listallnetworkservices | grep -Ei '(Ethernet|Wi-Fi|AirPort|Bridge)') )
+
+IFS="$OLDIFS"
+
+tLen=${#nserviceslist[@]}
+
+echo "Network Services List:"
+     for (( i=0; i<${tLen}; i++ ));
+     do
+     /usr/sbin/networksetup -setsearchdomains "${nserviceslist[$i]}" "$SearchDomains"
+     /bin/echo "${nserviceslist[$i]} is now configured with $SearchDomains as DNS Search Domain."
+     done
+
+exit 0

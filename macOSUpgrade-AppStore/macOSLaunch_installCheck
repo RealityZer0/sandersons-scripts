@@ -1,0 +1,33 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: macOS upgrade install check
+# SYNOPSIS: This will run as a munki install_check script
+# exit status of 0 equals install
+# exit status 1 equals no install
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 04/14/17
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+osMajor="$(sw_vers | awk '/ProductVersion/ {print $2}'| cut -c 1-5)"
+
+if [[ "$osMajor" < "10.12" ]]; then
+echo "macOS Sierra update available"
+exit 0
+else
+echo "macOS Sierra already installed"
+exit 1
+fi
+
+exit 1

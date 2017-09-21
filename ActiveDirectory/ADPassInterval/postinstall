@@ -1,0 +1,14 @@
+#!/bin/bash
+# Check Active Directory password change interval
+DSPassInterval="$(dsconfigad -show |grep "Password change interval"|awk '{print $5}')"
+#########################################################
+# Checks the current AD computer object password interval
+if [ $DSPassInterval -ne 30 ]; then
+	echo "Current password interval is $DSPassInterval days."
+	echo "Setting AD object password interval to 30 days"
+	/usr/sbin/dsconfigad -passinterval 30
+else
+	echo "No changes required as interval is set to $DSPassInterval days."
+fi
+
+exit 0

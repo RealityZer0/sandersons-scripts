@@ -1,0 +1,7 @@
+#!/bin/bash
+vpnOn="$(route get google.com | grep interface | awk '{ print $2 }')"
+
+if [[ ${vpnOn} =~ "utun" ]];then
+	echo "VPN Connection is live"
+	exit 1
+fi

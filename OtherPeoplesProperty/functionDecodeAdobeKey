@@ -1,0 +1,45 @@
+# Decode Adobe Serials 
+# Open Chrome developer tools debug console
+# command+option+j
+# paste the following
+function DecodeAdobeKey(sAdobeEncryptedKey) {
+var regex=/[0-9]{24}/g;
+if(!regex.test(sAdobeEncryptedKey))
+{
+    return 'corrupted serial';
+}
+var AdobeCipher = new Array(),index=0,sAdobeDecryptedKey='';
+AdobeCipher[index++] = '0000000001';
+AdobeCipher[index++] = '5038647192';
+AdobeCipher[index++] = '1456053789';
+AdobeCipher[index++] = '2604371895';
+AdobeCipher[index++] = '4753896210';
+AdobeCipher[index++] = '8145962073';
+AdobeCipher[index++] = '0319728564';
+AdobeCipher[index++] = '7901235846';
+AdobeCipher[index++] = '7901235846';
+AdobeCipher[index++] = '0319728564';
+AdobeCipher[index++] = '8145962073';
+AdobeCipher[index++] = '4753896210';
+AdobeCipher[index++] = '2604371895';
+AdobeCipher[index++] = '1426053789';
+AdobeCipher[index++] = '5038647192';
+AdobeCipher[index++] = '3267408951';
+AdobeCipher[index++] = '5038647192';
+AdobeCipher[index++] = '2604371895';
+AdobeCipher[index++] = '8145962073';
+AdobeCipher[index++] = '7901235846';
+AdobeCipher[index++] = '3267408951';
+AdobeCipher[index++] = '1426053789';
+AdobeCipher[index++] = '4753896210';
+AdobeCipher[index++] = '0319728564';
+//decode the adobe key
+for(var i=0;i<24;i++) {
+   if (i%4 == 0 && i>0)
+       sAdobeDecryptedKey += '-';
+   sAdobeDecryptedKey += AdobeCipher[i].charAt( sAdobeEncryptedKey.charAt(i) );
+   
+   
+# Separate command in debug console
+# Paste the following, changing the numerical value to the encrypted key
+console.log(DecodeAdobeKey('909607003803225056154584'))

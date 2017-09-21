@@ -1,0 +1,5 @@
+#!/bin/bash
+
+pkgbuild --root payload --install-location "/private/tmp/tvhost/" \
+--scripts scripts --identifier com.domain.TeamViewerHost \
+--version 12.x.xxxxx TeamViewerHost.pkg

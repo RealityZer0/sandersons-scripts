@@ -1,0 +1,207 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: HostRenameADBind
+# SYNOPSIS: Rename hosts and bind to Active Directory
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 3/8/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+# Parts of this were borrowed from Graham Gilbert
+# https://github.com/grahamgilbert/macscripts/blob/master/AD%20Bind/postinstall#L256
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+# Check domain connection
+domain="domain.com"
+adHost="$(/usr/bin/host ${domain} |awk 'FNR == 1 {print $1}')"
+# Checks AD bind status
+adInfo="$(dsconfigad -show | grep "Active Directory Domain" | sed -e 's/.*=\ //')"
+# Confirms AD bind status
+adConf="$(dscl localhost -read "/Active Directory/${domain}"|grep "AccountName:"|awk '{print $2}')"
+# Get AD Computer Object Name
+adComp="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| cut -c 1-5)" #tr -d \$)"
+# Grab current console user
+userName="$(ls -la /dev/console | awk '{print $3}')"
+# Get current Host Name
+hostName="$(/usr/sbin/scutil --get HostName)"
+# Get current Computer Name (for Bonjour)
+compName="$(/usr/sbin/scutil --get ComputerName 2>/dev/null)"
+# Get current Local Host Name
+localHostName="$(/usr/sbin/scutil --get LocalHostName| awk '{print $1}')"
+# Get Employee location
+userLoc="$(dscl "/Active Directory/${domain}" -read /Users/${userName}/ dsAttrTypeNative:extensionAttribute1| awk '{print $2}')"
+# Get Employee ID
+userID="$(dscl "/Active Directory/${domain}" -read /Users/${userName}/ dsAttrTypeNative:employeeID| awk '{print $2}'| tr '[:lower:]' '[:upper:]' )"
+# Hostname identifier for Mac laptops
+macLap="ML"
+# Hostname identifier for Mac desktops
+macDesk="MD"
+# Get Hardware format MacBook or Mac Mini or other
+hwForm="$(/usr/sbin/sysctl hw.model|awk '/Mac/ {print $2}'|tr -d \ "[0-9],"|cut -c 1-7)"
+#==========#
+# Exit loginhook if GID does not equal domain GID
+gID="12345"
+corpID="$(/usr/bin/id -G ${userName}| grep -c ${gID})"
+if [ ${corpID} -eq 0 ]; then
+	exit 1
+fi
+# Exit if not on domain
+if [[ "${adHost}" != "${domain}" ]]; then
+	echo "Exiting. Not on domain"
+	exit 1
+fi
+
+#==========#
+# Commands (DO NOT EDIT PAST THIS POINT)
+#==========#
+# Set variable for hostnames based on naming standards (host, localhost and computer)
+#==========#
+if [[ "$hwForm" = "MacBook" ]]; then
+	newHost=${userLoc}${macLap}${userID}
+else
+	newHost=${userLoc}${macDesk}${userID}
+fi
+
+#==========#
+# Query Active Directory if $NEWHOST exists
+#==========#
+client_name1="$(/usr/bin/dscl "/Active Directory/${domain}/${domain}" read /Computers/${newHost}$ | awk '/RecordName/ {print $2}')"
+client_disabled1="$(dscl "/Active Directory/${domain}/All Domains" -read /Computers/$client_name1$ | awk '/userAccountControl/ {print $2}')"
+client_name2="$(/usr/bin/dscl "/Active Directory/${domain}/${domain}" read /Computers/${newHost}-02$ | awk '/RecordName/ {print $2}')"
+client_disabled2="$(dscl "/Active Directory/${domain}/All Domains" -read /Computers/$client_name2$ | awk '/userAccountControl/ {print $2}')"
+client_name3="$(/usr/bin/dscl "/Active Directory/${domain}/${domain}" read /Computers/${newHost}-03$ | awk '/RecordName/ {print $2}')"
+client_disabled3="$(dscl "/Active Directory/${domain}/All Domains" -read /Computers/$client_name3$ | awk '/userAccountControl/ {print $2}')"
+client_name4="$(/usr/bin/dscl "/Active Directory/${domain}/${domain}" read /Computers/${newHost}-04$ | awk '/RecordName/ {print $2}')"
+client_disabled4="$(dscl "/Active Directory/${domain}/All Domains" -read /Computers/$client_name4$ | awk '/userAccountControl/ {print $2}')"
+if [[ -z  ${client_name1} || ${client_disabled1} =="4098" ]]; then
+		echo "Querying for first available hostname"
+		echo "Hostname will be set as '${newHost}'"
+		killall -HUP mDNSResponder
+		client_name=${client_name1}
+		set_host
+else #Query AD if $NEWHOST-02 exists
+	if [[ -z  ${client_name2} || ${client_disabled2} == "4098" ]]; then
+		echo "Querying for next available hostname"
+		echo "Hostname will be set as '${newHost}-02'"
+		killall -HUP mDNSResponder
+		client_name=${client_name2}
+		set_host
+	else
+		if [[ -z  ${client_name3} || ${client_disabled3} == "4098" ]]; then
+			echo "Querying for next available hostname"
+			echo "Hostname will be set as '${newHost}-03'"
+			killall -HUP mDNSResponder
+			client_name=${client_name3}
+			set_host
+	else
+		if [[ -z  ${client_name4} || ${client_disabled4} == "4098" ]]; then
+			echo "Querying for next available hostname"
+			echo "Hostname will be set as '${newHost}-04'"
+			killall -HUP mDNSResponder
+			client_name=${client_name4}
+			set_host
+		fi
+	  fi
+	fi
+fi
+#==========#
+# Change hostnames (host, localhost and computer)
+#==========#
+set_host()
+{
+    /usr/sbin/scutil --set LocalHostName "${client_name}"
+	defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "${client_name}"
+	/usr/sbin/scutil --set HostName "${client_name}"
+	/usr/sbin/scutil --set ComputerName "${client_name}"
+}
+#==========#
+# ADBIND Section
+#==========#
+# Standard parameters (all fields required)
+domain="domain.com"				# Fully qualified DNS name of Active Directory Domain
+ou="OU=Mac,OU=Workstations,DC=domain,DC=com"
+
+# Advanced options
+mobile="enable"						# 'enable' or 'disable' mobile account support for offline logon
+mobileconfirm="disable"				# 'enable' or 'disable' option for user to decline mobile account creation
+localhome="enable"					# 'enable' or 'disable' force home directory to local drive
+useuncpath="disable"				# 'enable' or 'disable' use AD SMBHome attribute to determine the home dir
+protocol="smb"						# 'afp' or 'smb' change how home is mounted from server
+user_shell="/bin/bash"				# /bin/bash, /bin/ksh, etc... or "none"
+passinterval="30"					# AD computer object password interval
+admingroups="macOS_Admins"	    # These comma-separated AD groups may administer the machine
+alldomains="enable"					# 'enable' or 'disable' authentication from any domain in the forest
+ad_admin="svc_account" 		# AD service account
+ad_pass="password"				# AD service account password
+ad_server="${domain}"				# AD domain
+gid="gidNumber"						# AD group id attribute number
+uid="uidNumber"						# AD user id attribute number
+
+AD_Bind()
+{
+
+isBoundtoAD=$(dscl localhost -read "/Active Directory/${domain}" DomainName 2>/dev/null | awk -F ':\ ' '{print $2}')
+
+if ! [[ "${isBoundtoAD}" = "${domain}" ]]; then
+	killall opendirectoryd
+	sleep 10
+	 # Unbind computer first
+	dsconfigad -username ${ad_admin} -password "${ad_pass}" -remove -force 2>&1
+	dsconfigad -add ${domain} -username ${ad_admin}  -password "${ad_pass}" -computer ${client_name} -ou "${ou}" -force 2>&1
+fi
+killall opendirectoryd
+/usr/bin/odutil reset cache
+sleep 10
+dsconfigad -username ${ad_admin} -password "${ad_pass}" -remove -force 2>&1
+dsconfigad -add ${domain} -username ${ad_admin}  -password "${ad_pass}" -computer ${client_name} -ou "${ou}" -force 2>&1
+dsconfigad -mobile ${mobile} 2>&1
+dsconfigad -mobileconfirm ${mobileconfirm} 2>&1
+dsconfigad -preferred ${preferred} 2>&1
+dsconfigad -localhome ${localhome} 2>&1
+dsconfigad -shell ${user_shell} 2>&1
+dsconfigad -useuncpath ${useuncpath} 2>&1
+dsconfigad -passinterval ${passinterval} 2>&1
+dsconfigad -protocol ${protocol} 2>&1
+dsconfigad -packetsign allow 2>&1
+dsconfigad -packetencrypt allow 2>&1
+dsconfigad -groups "${admingroups}" 2>&1
+dsconfigad -authority enable 2>&1
+dsconfigad -alldomains ${alldomains} 2>&1
+dsconfigad -uid ${uid} -gid ${gid} -ggid ${gid} 2>&1
+
+adSearchPath="$(dscl /Search -read / CSPSearchPath | awk '/Active Directory/ {print $0}')"
+  if [ -n "${adSearchPath}" ]
+  then
+    echo "Deleting '${adSearchPath}' from authentication search path..." 2>&1
+    dscl localhost -delete /Search CSPSearchPath "${adSearchPath}" 2>/dev/null
+    echo "Deleting '${adSearchPath}' from contacts search path..." 2>&1
+    dscl localhost -delete /Contact CSPSearchPath "${adSearchPath}" 2>/dev/null
+  fi
+dscl localhost -create /Search SearchPolicy CSPSearchPath 2>&1
+dscl localhost -create /Contact SearchPolicy CSPSearchPath 2>&1
+adDomainNode="$(dscl localhost -list "/Active Directory" | head -n 1)"
+adSearchPath="/Active Directory/${adDomainNode}/All Domains"
+echo "Adding '${adSearchPath}' to authentication search path..." 2>&1
+dscl localhost -append /Search CSPSearchPath "${adSearchPath}"
+echo "Adding '${adSearchPath}' to contacts search path..." 2>&1
+dscl localhost -append /Contact CSPSearchPath "${adSearchPath}"
+
+}
+
+#==========#
+# End ADBIND Section
+#==========#
+
+AD_Bind
+
+
+exit 0

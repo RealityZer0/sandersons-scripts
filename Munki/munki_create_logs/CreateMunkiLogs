@@ -1,0 +1,38 @@
+#!/bin/sh
+# NOT FINISHED
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+userName="$(ls -la /dev/console | awk '{print $3}')"
+NOW=$(date "+%m%d%Y")
+NOWT=$(date "+%H%M%S")
+LOGPATH="/Users/${userName}/MunkiDiags/"
+MUNKILOG="${LOGPATH}${userName}-munkilog-${NOW}-${NOWT}.txt"
+GZIPLOG="${LOGPATH}${userName}-munkilog-${NOW}-${NOWT}.gz"
+/bin/mkdir -p ${LOGPATH}
+/usr/local/munki/managedsoftwareupdate -vv > "${MUNKILOG}"
+/bin/cat "${MUNKILOG}" | /usr/bin/gzip -3 > "${GZIPLOG}"
+
+# Open Outlook message, modify subject, modify content and attach log
+/usr/bin/osascript <<EOF
+tell application "Finder"
+	set folderPath to folder "MunkiDiags" of home
+	set theFile to first file in folderPath as alias
+	set fileName to name of theFile
+end tell
+
+
+tell application "Microsoft Outlook"
+	activate
+	set newMessage to make new outgoing message with properties {subject:"Munki diagnostics log for USER", content:"Drag the file %username%-munkilog-%date%.gz to this message"}
+	make new recipient at newMessage with properties {email address:{name:"support_team", address:"support@domain.com"}}
+	tell newMessage
+		make new attachment at the end of newMessage with properties {file:theFile}
+	end tell
+	open newMessage
+	get newMessage
+end tell
+EOF
+/bin/rm -f "$MUNKILOG"
+/bin/rm -rf "$LOGPATH"
+exit 0

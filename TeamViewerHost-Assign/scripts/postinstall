@@ -1,0 +1,15 @@
+#!/bin/sh
+#NEED To fix InstallHelper popup
+#pkgLink="https://download.teamviewer.com/download/version_12x/CustomDesign/Install%20TeamViewerHost-idchcvf3j2.pkg"
+source="/private/tmp/tvhost"
+tvID="0123456"
+installTVH="Install TeamViewerHost-idc${tvID}.pkg"
+libAppSupTV="/Library/Application Support/TeamViewer Host/Custom Configurations"
+apiToken="0000000-20000000000000000000"
+defaults write /Library/Preferences/com.teamviewer.teamviewer.preferences.plist OptionsPasswordAES "<128-bit-key-here>"
+defaults write /Library/Preferences/com.teamviewer.teamviewer.preferences.plist Buddy_ShowPartnerListOnStartup -bool FALSE
+installer -pkg "${source}/${installTVH}" -target /
+${source}/TeamViewer_Assignment -apitoken "${apiToken}" \
+-datafile "${libAppSupTV}/${tvID}/AssignmentData.json"  \
+-devicealias "${HOSTNAME}" -allowEasyAccess=true -wait=30
+/bin/rm -rf "${source}" &>/dev/null

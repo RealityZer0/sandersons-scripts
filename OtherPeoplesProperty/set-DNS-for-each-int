@@ -1,0 +1,26 @@
+#!/bin/bash
+
+declare -x setDNS="10.x.x.x 10.x.x.x"
+
+OLDIFS="$IFS"
+     IFS=$'\n'
+
+declare -x nserviceslist=( $(/usr/sbin/networksetup -listallnetworkservices | grep -Ei '(Ethernet|Wi-Fi|AirPort|Bridge|Thunderbolt Ethernet|USB Ethernet)') )
+
+IFS="$OLDIFS"
+
+tLen=${#nserviceslist[@]}
+/usr/sbin/networksetup -getdnsservers "${nserviceslist[$i]}"
+echo "Network Services List:"
+     for (( i=0; i<${tLen}; i++ ));
+     do
+		customDNS=$(/usr/sbin/networksetup -getdnsservers "${nserviceslist[$i]}")
+		if [[ "$customDNS" =~ "set on ${nserviceslist[$i]}" ]]; then
+			echo "${nserviceslist[$i]} is not using custom DNS."
+		else
+     	#/usr/sbin/networksetup -setdnsservers "${nserviceslist[$i]}" $setDNS
+     	/bin/echo "${nserviceslist[$i]} is now configured with $setDNS as DNS Search Domain."
+	fi
+     done
+
+exit 0

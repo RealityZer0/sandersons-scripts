@@ -1,0 +1,21 @@
+#!/bin/bash
+macOSSierra="/Applications/Install macOS Sierra.app"
+remSierrald="/Library/LaunchDaemons/com.domain.removeSierra.plist"
+remSierra="/usr/local/corp/noSierra/removeSierra"
+noSierra="/usr/local/corp/noSierra/noSierra.app"
+
+if [ -e "$macOSSierra" ]; then
+	echo "Deleting macOS Sierra installer"
+	killall "InstallAssistant"
+  	rm -r  "$macOSSierra"
+else
+	echo "No Sierra installer found, exiting."
+fi
+
+/bin/launchctl load "$remSierrald" 2>/dev/null
+/bin/launchctl start "$remSierrald" 2>/dev/null
+/usr/bin/chflags schg "$remSierrald" 2>/dev/null
+/usr/bin/chflags schg "$remSierra" 2>/dev/null
+/usr/bin/chflags schg "$noSierra" 2>/dev/null
+
+exit 0

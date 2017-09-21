@@ -1,0 +1,169 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: auto_adbind
+# SYNOPSIS: Rebind unbound hosts to Active Directory
+#==========#
+# HISTORY:
+# Version 1.1
+# Created by Nick Rodriguez
+# Creation Date
+# Revised by Scott Anderson
+# Revision Date 4/5/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+# Get current AD computer object name
+ADComp="$(dsconfigad -show | awk '/Computer Account/ {print $4}')"
+# Get current AD computer object name sans $
+ADComp_neat="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| tr '[:lower:]' '[:upper:]' | tr -d \$)"
+# Host check used to get rid of YPCMC
+#ADHostCheck="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| cut -c 1-4)"
+# Grab current console user
+userName="$(ls -la /dev/console | awk '{print $3}')"
+# Get current Host Name
+hostName="$(/usr/sbin/scutil --get HostName)"
+# Get current Computer Name (for Bonjour)
+compName="$(/usr/sbin/scutil --get ComputerName)"
+# Get current Local Host Name
+localHost="$(/usr/sbin/scutil --get LocalHostName)"
+# Check if Host Name is disabled
+ADComp_UAC="$(dscl "/Active Directory/CORP/All Domains" -read /Computers/$ADComp | awk '/userAccountControl/ {print $2}')"
+
+#==========#
+# AD Unbind Function
+#==========#
+AD_unbind()
+{
+	echo "Unbinding $ADComp_neat."
+	dsconfigad -remove -force -username macadmin -password validpassnotneeded 2>&1
+	sleep 5
+	killall -HUP mDNSResponder
+	killall opendirectoryd
+	sleep 5
+
+	echo "Unbinding $ADComp_neat twice."
+	dsconfigad -remove -force -username macadmin -password validpassnotneeded 2>&1
+	sleep 5
+
+}
+#==========#
+# AD Bind Function
+#==========#
+AD_bind()
+{
+	# Standard parameters (all fields required)
+	domain="domain.com"				# Fully qualified DNS name of Active Directory Domain
+	ou="OU=Workstations,DC=domain,DC=com"
+	computer_id="$(/usr/sbin/scutil --get LocalHostName)"
+	# Advanced options
+	mobile="enable"						# 'enable' or 'disable' mobile account support for offline logon
+	mobileconfirm="disable"				# 'enable' or 'disable' option for user to decline mobile account creation
+	localhome="enable"					# 'enable' or 'disable' force home directory to local drive
+	useuncpath="disable"				# 'enable' or 'disable' use AD SMBHome attribute to determine the home dir
+	protocol="smb"						# 'afp' or 'smb' change how home is mounted from server
+	user_shell="/bin/bash"				# /bin/bash, /bin/ksh, etc... or "none"
+	passinterval="30"					# AD computer object password interval. Check every 30 days.
+	admingroups="ADGroup"	    # These comma-separated AD groups may administer the machine
+	alldomains="enable"					# 'enable' or 'disable' authentication from any domain in the forest
+	ad_admin="svc_account" 		# AD service account
+	ad_pass="password" 				# AD service account password
+	ad_server="domain.com"				# AD domain
+	gid="gidNumber"						# AD group id attribute number
+	uid="uidNumber"						# AD user id attribute number
+
+	dsconfigad -add $domain -username $ad_admin  -password "$ad_pass" -computer "$computer_id" -ou "$ou" -force 2>&1
+	dsconfigad -mobile $mobile 2>&1
+	dsconfigad -mobileconfirm $mobileconfirm 2>&1
+	dsconfigad -localhome $localhome 2>&1
+	dsconfigad -shell $user_shell 2>&1
+	dsconfigad -useuncpath $useuncpath 2>&1
+	dsconfigad -passinterval $passinterval 2>&1
+	dsconfigad -protocol $protocol 2>&1
+	dsconfigad -packetsign allow 2>&1
+	dsconfigad -packetencrypt allow 2>&1
+	dsconfigad -groups "$admingroups" 2>&1
+	dsconfigad -authority enable 2>&1
+	dsconfigad -alldomains $alldomains 2>&1
+	dsconfigad -uid $uid -gid $gid -ggid $gid 2>&1
+
+	ADSearchPath="$(dscl /Search -read / CSPSearchPath | awk '/Active Directory/ {print $0}')"
+  if [ -n "${ADSearchPath}" ]; then
+    echo "Deleting '${ADSearchPath}' from authentication search path..." 2>&1
+    dscl localhost -delete /Search CSPSearchPath "${ADSearchPath}" 2>/dev/null
+    echo "Deleting '${ADSearchPath}' from contacts search path..." 2>&1
+    dscl localhost -delete /Contact CSPSearchPath "${ADSearchPath}" 2>/dev/null
+  fi
+	dscl localhost -create /Search SearchPolicy CSPSearchPath 2>&1
+	dscl localhost -create /Contact SearchPolicy CSPSearchPath 2>&1
+	ADDomainNode="$(dscl localhost -list "/Active Directory" | head -n 1)"
+	ADSearchPath="/Active Directory/${ADDomainNode}/All Domains"
+	echo "Adding '${ADSearchPath}' to authentication search path..." 2>&1
+	dscl localhost -append /Search CSPSearchPath "${ADSearchPath}"
+	echo "Adding '${ADSearchPath}' to contacts search path..." 2>&1
+	dscl localhost -append /Contact CSPSearchPath "${ADSearchPath}"
+	/usr/bin/odutil reset cache
+
+}
+
+
+#==========#
+# Conditions
+#==========#
+# Confirm host can contact CORP
+if ping -c 2 -o "$domain"; then
+	isBoundtoAD=$(dscl localhost -read "/Active Directory/CORP" DomainName 2>/dev/null | awk '{print $2}')
+	if [ "$isBoundtoAD" == "$domain" ]; then
+			security find-generic-password -l "/Active Directory/CORP" | grep "Active Directory"
+		if [ "$?" == "0" ]; then
+			## AD keychain entry exists
+			dscl "/Active Directory/Domain/All Domains" read /Computers/"$ADCompName" | grep -i "$ADCompName"
+				if [ "$?" == "0" ]; then
+					## Found AD entry. Binding is good
+					res="bound"
+				else
+					res="not bound"
+				fi
+		else
+			res="not bound"
+		fi
+	else
+		res="not bound"
+	fi
+else
+	res="not on network"
+fi
+
+# Act on $res results
+# Unbind
+echo "$ADComp_neat is $res"
+if [[ $res == "not bound" ]]; then
+	/usr/sbin/systemsetup -setusingnetworktime off
+	/usr/sbin/systemsetup -setnetworktimeserver "ntp.domain.com"
+	/usr/sbin/systemsetup -setusingnetworktime on
+	sleep 5
+	scutil --set HostName $localHost
+	scutil --set ComputerName $localHost
+	AD_unbind
+	sleep 5
+	AD_bind
+# No network connection detected
+elif [[ $res == "not on network" ]]; then
+	echo "$ADComp_neat is $res."
+	echo "Connect $ADComp_neat to LAN, WLAN or VPN and try again."
+	exit 1
+else
+	# Computer is already bound
+	echo "$ADComp_neat is $res."
+	exit 0
+fi
+
+
+exit 0

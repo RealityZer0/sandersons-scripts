@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.domain.enable-ard</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/scripts/enable-ard.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/var/log/com.domain.enable-ard.err</string>
+	<key>StandardOutPath</key>
+	<string>/var/log/com.domain.enable-ard.out</string>
+	<key>WatchPaths</key>
+	<array>
+		<string>/private/etc/RemoteManagement.launchd</string>
+		<string>/Library/Preferences/com.apple.VNCSettings.txt</string>
+		<string>/Library/Preferences/com.apple.RemoteManagement.plist</string>
+	</array>
+</dict>
+</plist>

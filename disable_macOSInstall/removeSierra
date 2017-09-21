@@ -1,0 +1,32 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: RemoveSierra
+# SYNOPSIS: Remove macOS Sierra installer and warn user
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson
+# Creation Date 9/9/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+macOSSierra="/Applications/Install macOS Sierra.app"
+if [ -e "$macOSSierra" ]; then
+	echo "Deleting macOS Sierra installer"
+	killall "InstallAssistant"
+	open "/usr/local/scripts/noSierra/noSierra.app"
+  	rm -r  "$macOSSierra"
+else
+	echo "No Sierra installer found, exiting."
+	exit 0
+fi
+
+exit 0

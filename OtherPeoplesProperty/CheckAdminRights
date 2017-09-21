@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# (c) 2010 Walter Meyer SUNY Purchase College
+# Add a user or group to the administrators group on a workstation in a "Munki-Friendly" way.
+
+#https://github.com/munki/munki/wiki/Managing-Admin-Rights-With-Munki
+
+# Change one variable, either the USER or GROUP that you want to give administrative rights to.
+# Make sure to leave one variable empty depending on whether you are adding a user or group.
+USER="some.user"
+GROUP=""
+
+# Create a directory to store the files we will need.
+/bin/mkdir -p /Library/Scripts/Administrative-Rights
+
+# Add the USER or GROUP to the local admin group.
+if [ -n "${USER}" ]; then
+    /usr/sbin/dseditgroup -o edit -n /Local/Default -a $USER -t user admin
+
+    # Create a file based on what user or group is getting admin rights that Munki can checksum.
+    /bin/echo "$USER" > /Library/Scripts/Administrative-Rights/granted-admin-rights_$USER
+
+    # Create script that can be used by Munki to remove the user from the admin group.
+    uninstall_script="/Library/Scripts/Administrative-Rights/remove-admin-rights_$USER.sh"
+    /bin/echo "#!/bin/sh" > "$uninstall_script"
+    /bin/echo "/usr/sbin/dseditgroup -o edit -n /Local/Default -d $USER -t user admin" >> "$uninstall_script"
+    /bin/echo "/usr/bin/srm /Library/Scripts/Administrative-Rights/granted-admin-rights_$USER" >> "$uninstall_script"
+    /bin/echo "/usr/bin/srm /Library/Scripts/Administrative-Rights/remove-admin-rights_$USER.sh" >> "$uninstall_script"
+    /bin/echo "exit 0" >> "$uninstall_script"
+else
+    /usr/sbin/dseditgroup -o edit -n /Local/Default -a $GROUP -t group admin
+
+    # Create a file based on what user or group is getting admin rights that Munki can checksum.
+    /bin/echo "$GROUP" > /Library/Scripts/Administrative-Rights/granted-admin-rights_$GROUP
+
+    # Create script that can be used by Munki to remove the user from the admin group.
+    uninstall_script="/Library/Scripts/Administrative-Rights/remove-admin-rights_$GROUP.sh"
+    /bin/echo "#!/bin/sh" > "$uninstall_script"
+    /bin/echo "/usr/sbin/dseditgroup -o edit -n /Local/Default -d $GROUP -t group admin" >> "$uninstall_script"
+    /bin/echo "/usr/bin/srm /Library/Scripts/Administrative-Rights/granted-admin-rights_$GROUP" >> "$uninstall_script"
+    /bin/echo "/usr/bin/srm /Library/Scripts/Administrative-Rights/remove-admin-rights_$GROUP.sh" >> "$uninstall_script"
+    /bin/echo "exit 0" >> "$uninstall_script"
+fi
+
+# Permission the directory properly.
+/usr/sbin/chown -R root:admin /Library/Scripts/Administrative-Rights
+/bin/chmod -R 700 /Library/Scripts/Administrative-Rights
+
+exit 0

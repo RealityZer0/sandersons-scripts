@@ -1,0 +1,3 @@
+pkgbuild --root payload --install-location "/usr/local/efi/" \
+--scripts scripts --identifier com.domain.efipass \
+--version 0.1 efipass.pkg

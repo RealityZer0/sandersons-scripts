@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Deliver setregproptool payload
+# Tested on 10.9.x - 10.12.x DO NOT USE with 10.13.x
+
+# Set EFI password
+/usr/local/efi/setregproptool -m full -p passwordhere
+
+# Reboot machine
+/sbin/shutdown -r now

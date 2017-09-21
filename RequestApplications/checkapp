@@ -1,0 +1,15 @@
+#!/bin/sh
+##==========#
+# VARIABLES
+#==========#
+# App Requested
+appRequest="TextMate2"
+# App install location
+appLocation="/Applications/TextMate.app/Contents/MacOS/TextMate"
+#==========#
+# COMMANDS
+#==========#
+if [[ -e "$appLocation" ]]; then
+  echo "$appRequest is installed."
+  exit 1
+fi

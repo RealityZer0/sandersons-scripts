@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+userName="$(ls -la /dev/console | awk '{print $3}')"
+
+# Check for existing launch agent
+if [ -f /Library/LaunchDaemons/efic.plist ]; then
+  #  echo "LaunchAgent for ADPassMon already exists. Removing..."
+    rm /Library/LaunchDaemons/efic.plist
+fi
+
+# Write out a LaunchDaemon
+/usr/bin/defaults write /Library/LaunchDaemons/efic.plist Label yp.efic
+/usr/bin/defaults write /Library/LaunchDaemons/efic.plist ProgramArguments -array
+/usr/bin/defaults write /Library/LaunchDaemons/efic.plist RunAtLoad -bool YES
+/usr/bin/defaults write /Library/LaunchDaemons/efic.plist KeepAlive -bool YES
+/usr/libexec/PlistBuddy -c "Add ProgramArguments: string /usr/local/efi/setregproptool" /Library/LaunchDaemons/efic.plist
+/usr/sbin/chown root:wheel /Library/LaunchDaemons/efic.plist
+/bin/chmod 644 /Library/LaunchDaemons/efic.plist
+
+exit 0

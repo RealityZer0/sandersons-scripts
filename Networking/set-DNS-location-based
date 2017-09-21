@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: SetCorpDNS
+# SYNOPSIS: This will run as a munki install_check script
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 4/27/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+# Parts of this were borrowed from Erik Berglund
+# https://github.com/erikberglund
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+
+checkIPLoc="$(ping -c 2 -o host.com | grep PING | awk -F"[()]" '{print $2}')"
+SetDNSEast="10.x.x.x 10.x.x.x"
+SetDNSWest="10.x.x.x 10.x.x.x"
+# Loop through all active network services and change DNS.
+if [ ${checkIPLoc} = "10.x.x.x" ]; then
+	while read networkService; do
+		networksetup -setdnsservers "${networkService}" "${SetDNSEast}"
+	done < <( networksetup -listnetworkserviceorder | awk '/^\([0-9]/{$1 ="";gsub("^ ","");print}' )
+
+elif [ ${checkIPLoc} == "10.x.x.x" ]; then
+	while read networkService; do
+		networksetup -setdnsservers "${networkService}" "${SetDNSWest}"
+	done < <( networksetup -listnetworkserviceorder | awk '/^\([0-9]/{$1 ="";gsub("^ ","");print}' )
+else
+	echo "Not on domain."
+	exit 0
+fi
+
+exit 0

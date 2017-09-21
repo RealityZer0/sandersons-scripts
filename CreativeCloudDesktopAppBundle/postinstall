@@ -1,0 +1,52 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: CCDA and docs installer
+# SYNOPSIS: Install Adobe Creative Cloud Desktop Application and copy/launch pdf to User's docs directory
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson
+# Creation Date 9/29/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+# Grab current console user
+userName="$(ls -la /dev/console | awk '{print $3}')"
+userHome="/Users/$userName"
+SOURCE="/private/tmp/ccda"
+targetVol="${3}" 
+
+#Check for CCDA and install if not available
+pkgutil --pkg-info com.adobe.Enterprise.install.39392B26-C3C7-42B9-9485-7A96F37FAD99
+if [ $? -ne 0 ]; then
+	echo "CCDA not installed."
+	installer -pkg "$SOURCE/CreativeCloudDesktopApp_380310.pkg" -target "$targetVol"
+else
+	echo "CCDA installed. Skipping installation."
+fi
+
+#Create Desktop Shortcut to CCDA
+
+
+#Copy and launch CC doc to User's Documents directory
+if [ -f "$userHome/Documents/AdobeCreativeCloud-info.pdf" ]; then
+	open -a "Finder" "$userHome/Documents/AdobeCreativeCloud-info.pdf"
+else
+	cp $SOURCE/AdobeCreativeCloud-info.pdf "$userHome/Documents/" &>/dev/null
+	open -a "Finder" "$userHome/Documents/AdobeCreativeCloud-info.pdf"
+fi
+ln -s "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" "$userHome/Desktop/Creative Cloud"
+open "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app"
+
+#Delete source files
+rm -rf $SOURCE &>/dev/null
+
+exit 0

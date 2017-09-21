@@ -1,0 +1,225 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: auto_adbind
+# SYNOPSIS: Rebind unbound hosts to Active Directory
+#==========#
+# HISTORY:
+# Version 1.1
+# Created by Scott Anderson
+# Revision Date 4/5/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+# Get current AD computer object name
+ADComp="$(dsconfigad -show | awk '/Computer Account/ {print $4}')"
+# Get current AD computer object name sans $
+ADComp_neat="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| tr '[:lower:]' '[:upper:]' | tr -d \$)"
+# Grab current console user
+userName="$(ls -la /dev/console | awk '{print $3}')"
+# Get current Host Name
+hostName="$(/usr/sbin/scutil --get HostName)"
+# Get current Computer Name (for Bonjour)
+compName="$(/usr/sbin/scutil --get ComputerName)"
+# Get current Local Host Name
+localHost="$(/usr/sbin/scutil --get LocalHostName)"
+# Check if Host Name is disabled
+ADComp_UAC="$(dscl "/Active Directory/DOMAIN/All Domains" -read /Computers/$ADComp | awk '/userAccountControl/ {print $2}')"
+# Get Employee location
+empLoc="$(dscl "/Active Directory/DOMAIN/DOMAIN.com" -read /Users/$userName/ dsAttrTypeNative:extensionAttribute1| awk '{print $2}')"
+# Get Employee ID
+empID="$(dscl "/Active Directory/DOMAIN/DOMAIN.com" -read /Users/$userName/ dsAttrTypeNative:employeeID| awk '{print $2}'| tr '[:lower:]' '[:upper:]' )"
+# Hostname identifier for Mac laptops
+MAC_LAP="ML"
+# Hostname identifier for Mac desktops
+MAC_DESK="MD"
+# Hostname identifier for Mac desktops
+MAC_VM="MV"
+# Get Hardware format MacBook or Mac Mini or other
+HWFORM="$(/usr/sbin/sysctl hw.model|awk '{print $2}'|tr -d \ "[0-9],")"
+# Active Directory info
+# Standard parameters (all fields required)
+domain="DOMAIN.com"				# Fully qualified DNS name of Active Directory Domain
+ou="OU=Workstations,DC=DOMAIN,DC=com"
+mobile="enable"						# 'enable' or 'disable' mobile account support for offline logon
+mobileconfirm="disable"				# 'enable' or 'disable' option for user to decline mobile account creation
+localhome="enable"					# 'enable' or 'disable' force home directory to local drive
+useuncpath="disable"				# 'enable' or 'disable' use AD SMBHome attribute to determine the home dir
+protocol="smb"						# 'afp' or 'smb' change how home is mounted from server
+user_shell="/bin/bash"				# /bin/bash, /bin/ksh, etc... or "none"
+passinterval="30"					# AD computer object password interval. Check every 30 days.
+admingroups="ADGroup"	    # These comma-separated AD groups may administer the machine
+alldomains="enable"					# 'enable' or 'disable' authentication from any domain in the forest
+ad_admin="svc_account" 		# AD service account
+ad_pass="password"				# AD service account password
+ad_server="DOMAIN.com"				# AD domain
+gid="gidNumber"						# AD group id attribute number
+uid="uidNumber"						# AD user id attribute number
+
+# Need to rebind before attempting any DSCL commands
+isBoundtoAD=$(dscl localhost -read "/Active Directory/DOMAIN" DomainName 2>/dev/null | awk '{print $2}')
+
+if ! [ "$isBoundtoAD" == "$domain" ]; then
+	killall -HUP mDNSResponder
+	killall opendirectoryd
+	sleep 5
+	# Unbind computer first
+	#dsconfigad -username $ad_admin -password "$ad_pass" -remove -force 2>&1
+	dsconfigad -add $domain -username $ad_admin  -password "$ad_pass" -computer "$HostName" -ou "$ou" -force 2>&1
+	sleep 5
+fi
+#==========#
+# Rename host function
+#==========#
+rename_host()
+{
+	#==========#
+	# Variables for determining client name
+	#==========#
+	if [[ "$HWFORM" == "MacBookAir" || "$HWFORM" == "MacBookPro" ]]; then
+		NEWHOST=$EMPLOC$MAC_LAP$EMPID
+		echo $NEWHOST
+	elif [[ "$HWFORM" == "Macmini" || "$HWFORM" == "iMac" ]]; then
+		NEWHOST=$EMPLOC$MAC_DESK$EMPID
+		echo $NEWHOST
+	elif [ "$HWFORM" == "VMware" ]; then
+		NEWHOST=$EMPLOC$MAC_VM$EMPID
+		echo $NEWHOST
+	fi
+	# Check AD if client name exists, if exists is client set to disabled
+	# Query AD if $NEWHOST-02 exists
+	client_name1="$(/usr/bin/dscl "/Active Directory/DOMAIN/DOMAIN.com" read /Computers/$NEWHOST$ | awk '/RecordName/ {print $2}')"
+	client_disabled1="$(dscl "/Active Directory/DOMAIN/All Domains" -read /Computers/$NEWHOST$ | awk '/userAccountControl/ {print $2}')"
+		if [[ -z  $client_name1 || $client_disabled1 == "4098" ]]; then
+			echo "Querying for first available hostname"
+			echo "Hostname will be set as '$NEWHOST'"
+			client_name=$NEWHOST
+			echo "$client_name"
+			/usr/sbin/scutil --set LocalHostName "$client_name"
+			defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "$client_name"
+			/usr/sbin/scutil --set HostName "$client_name"
+			/usr/sbin/scutil --set ComputerName "$client_name"
+		else # Query AD if $NEWHOST-02 exists
+			client_name2="$(/usr/bin/dscl "/Active Directory/DOMAIN/DOMAIN.com" read /Computers/$NEWHOST-02$ | awk '/RecordName/ {print $2}')"
+			client_disabled2="$(dscl "/Active Directory/DOMAIN/All Domains" -read /Computers/$NEWHOST-02$ | awk '/userAccountControl/ {print $2}')"
+			if [[ -z  $client_name2 || $client_disabled2 == "4098" ]]; then
+				echo "Querying for next available hostname"
+				echo "Hostname will be set as '$NEWHOST-02'"
+				client_name=$NEWHOST-02
+				echo "$client_name"
+				/usr/sbin/scutil --set LocalHostName "$client_name"
+				defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "$client_name"
+				/usr/sbin/scutil --set HostName "$client_name"
+				/usr/sbin/scutil --set ComputerName "$client_name"
+		else # Query AD if $NEWHOST-03 exists
+			client_name3="$(/usr/bin/dscl "/Active Directory/DOMAIN/DOMAIN.com" read /Computers/$NEWHOST-03$ | awk '/RecordName/ {print $2}')"
+			client_disabled3="$(dscl "/Active Directory/DOMAIN/All Domains" -read /Computers/$NEWHOST-03$ | awk '/userAccountControl/ {print $2}')"
+			if [[ -z  $client_name3 || $client_disabled3 == "4098" ]]; then
+				echo "Querying for next available hostname"
+				echo "Hostname will be set as '$NEWHOST-03'"
+				client_name=$NEWHOST-03
+				echo "$client_name"
+				/usr/sbin/scutil --set LocalHostName "$client_name"
+				defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "$client_name"
+				/usr/sbin/scutil --set HostName "$client_name"
+				/usr/sbin/scutil --set ComputerName "$client_name"
+		else # Query AD if $NEWHOST-04 exists
+			client_name4="$(/usr/bin/dscl "/Active Directory/DOMAIN/DOMAIN.com" read /Computers/$NEWHOST-04$ | awk '/RecordName/ {print $2}')"
+			client_disabled4="$(dscl "/Active Directory/DOMAIN/All Domains" -read /Computers/$NEWHOST-04$ | awk '/userAccountControl/ {print $2}')"
+			if [[ -z  $client_name4 || $client_disabled4 == "4098" ]]; then
+				echo "Querying for next available hostname"
+				echo "Hostname will be set as '$NEWHOST-04'"
+				killall -HUP mDNSResponder
+				client_name=$NEWHOST-04
+				echo "$client_name"
+				/usr/sbin/scutil --set LocalHostName "$client_name"
+				defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "$client_name"
+				/usr/sbin/scutil --set HostName "$client_name"
+				/usr/sbin/scutil --set ComputerName "$client_name"
+			fi
+		  fi
+		fi
+	fi
+
+}
+#==========#
+# Active Directory bind function
+#==========#
+AD_bind()
+{
+
+	killall opendirectoryd
+	/usr/bin/odutil reset cache
+	sleep 5
+	dsconfigad -username $ad_admin -password "$ad_pass" -remove -force 2>&1
+	dsconfigad -add $domain -username $ad_admin  -password "$ad_pass" -computer "$HostName" -ou "$ou" -force 2>&1
+	dsconfigad -mobile $mobile 2>&1
+	dsconfigad -mobileconfirm $mobileconfirm 2>&1
+	dsconfigad -localhome $localhome 2>&1
+	dsconfigad -shell $user_shell 2>&1
+	dsconfigad -useuncpath $useuncpath 2>&1
+	dsconfigad -passinterval $passinterval 2>&1
+	dsconfigad -protocol $protocol 2>&1
+	dsconfigad -packetsign allow 2>&1
+	dsconfigad -packetencrypt allow 2>&1
+	dsconfigad -groups "$admingroups" 2>&1
+	dsconfigad -authority enable 2>&1
+	dsconfigad -alldomains $alldomains 2>&1
+	dsconfigad -uid $uid -gid $gid -ggid $gid 2>&1
+
+	ADSearchPath="$(dscl /Search -read / CSPSearchPath | awk '/Active Directory/ {print $0}')"
+  if [ -n "${ADSearchPath}" ]
+  then
+    echo "Deleting '${ADSearchPath}' from authentication search path..." 2>&1
+    dscl localhost -delete /Search CSPSearchPath "${ADSearchPath}" 2>/dev/null
+    echo "Deleting '${ADSearchPath}' from contacts search path..." 2>&1
+    dscl localhost -delete /Contact CSPSearchPath "${ADSearchPath}" 2>/dev/null
+  fi
+	dscl localhost -create /Search SearchPolicy CSPSearchPath 2>&1
+	dscl localhost -create /Contact SearchPolicy CSPSearchPath 2>&1
+	ADDomainNode="$(dscl localhost -list "/Active Directory" | head -n 1)"
+	ADSearchPath="/Active Directory/${ADDomainNode}/All Domains"
+	echo "Adding '${ADSearchPath}' to authentication search path..." 2>&1
+	dscl localhost -append /Search CSPSearchPath "${ADSearchPath}"
+	echo "Adding '${ADSearchPath}' to contacts search path..." 2>&1
+	dscl localhost -append /Contact CSPSearchPath "${ADSearchPath}"
+}
+
+
+#==========#
+# Conditions
+#==========#
+
+if [[ -z $ADComp ]] || [[ $ADHostCheck = "DOMAIN.com" ]]; then
+	echo "$ADComp_neat must be renamed and rebound"
+	rename_host
+elif [[ $ADComp_neat != $HostName ]]; then
+		echo "$ADComp_neat requires rebind."
+		echo "$ADComp_neat does NOT match $HostName. Setting..."
+		/usr/sbin/scutil --set LocalHostName $ADComp_neat
+		defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName $ADComp_neat
+		/usr/sbin/scutil --set HostName $ADComp_neat
+		/usr/sbin/scutil --set ComputerName $ADComp_neat
+		echo "Binding $ADComp_neat"
+	elif [[ $ADComp_neat = $HostName ]]; then
+		echo "$ADComp requires rebind."
+		echo "$ADComp matches $HostName. Setting..."
+		/usr/sbin/scutil --set LocalHostName $ADComp_neat
+		defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName $ADComp_neat
+		/usr/sbin/scutil --set ComputerName $ADComp_neat
+		echo "Binding $ADComp_neat"
+fi
+#==========#
+# Run AD Bind
+#==========#
+AD_bind
+
+
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+SOURCE="/private/tmp/enalf"
+
+/bin/cp ${SOURCE}/com.domain.enable-alf.plist /Library/LaunchDaemons/ &>/dev/null
+/bin/mkdir -p /usr/local/scripts &>/dev/null
+/bin/cp ${SOURCE}/enable-alf.sh /usr/local/corp/ &>/dev/null
+/bin/launchctl load /Library/LaunchDaemons/com.domain.enable-alf.plist &>/dev/null
+/bin/rm -rf ${SOURCE} &>/dev/null

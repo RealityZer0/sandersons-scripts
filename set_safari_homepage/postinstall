@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DSCL=/usr/bin/dscl
+DEFAULTS=/usr/bin/defaults
+userName="$(ls -la /dev/console | awk '{print $3}')"
+gID="$(${DSCL} -q . -read /Users/${userName} PrimaryGroupID 2>/dev/null | /usr/bin/awk '{print $2}')"
+HOME="$(${DSCL} -q . -read /Users/${userName} home 2>/dev/null | /usr/bin/awk '{print $2}')"
+HOMEPAGE_URL="http://domain.intranet.com"
+
+${DEFAULTS} write ${HOME}/Library/Preferences/com.apple.Safari HomePage ${HOMEPAGE_URL} 2>/dev/null
+chown ${userName}:${gID} ${HOME}/Library/Preferences/com.apple.Safari.plist
+
+exit 0

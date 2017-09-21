@@ -1,0 +1,130 @@
+#!/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+USERNAME="$(ls -la /dev/console | awk '{print $3}')"
+MacHDD="$(diskutil list | awk '/Macintosh HD/ {print $7}')"
+ADS="$(df -lh | grep "$MacHDD" | awk '{print $4}'| tr -d \Gi)"
+ADSFull="$(df -lh | grep "$MacHDD" | awk '{print $4}')"
+VarLogX="$(find /var/log/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \))"
+LibLogX="$(find /Library/Logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \))"
+LibCaches="/Library/Caches"
+LibCachesSpace="$(du -h -d 1 $LibCaches | awk 'END {print $1}')"
+PvtTmp="/private/tmp"
+PvtTmpSpace="$(du -h -d 1 $PvtTmp| awk 'END {print $1}')"
+TodayDate=$(date "+%m%d%Y")
+TodayTime=$(date "+%H%M%S")
+
+# Check available disk Space
+echo "Current available disk Space is at $ADSFull."
+echo "Performing periodic maintenance"
+periodic daily weekly monthly
+sleep 2
+echo "Maintenance checks complete"
+echo "Removing extraneous logs from /var/log"
+#newsyslog -F /var/log/system.log  
+find /var/log/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete
+echo "Removing extraneous logs from /Library/Logs"
+find /Library/logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete
+# Clean /Library/Caches , ~/Library/Caches, /private/tmp and .Trash
+echo "Clearing $LibCachesSpace of disk Space from $LibCaches"
+rm -rf /Library/Caches/*
+echo "Clearing $PvtTmpSpace of disk Space from $PvtTmp"
+rm -rf /private/tmp/*
+
+# For each loop on /Users
+for USERHOME in /Users/*
+	do
+		UserUID=`basename "${USERHOME}"`
+		CheckUID="$(dscl /Local/Default/ read /Users/$UserUID | awk '/RecordName/ {print $2}')"
+		if [ ! "${UserUID}" = "Shared" ]; then
+			#DarUser
+			echo "Removing extraneous logs from "${USERHOME}"/Logs"
+			DarUser="$(sudo -u "$UserUID" getconf DARWIN_USER_DIR)"
+			DarUserSpace="$(du -h -d 1 $DarUser | awk 'END {print $1}')"
+			echo "Clearing $DarUserSpace of disk Space from $DarUser"
+			rm -rf $DarUser/*
+			#DarUserTemp
+			DarUserTemp="$(sudo -u "$UserUID" getconf DARWIN_USER_TEMP_DIR)"
+			DarUserTempSpace="$(du -h -d 1 $DarUserTemp | awk 'END {print $1}')"
+			echo "Clearing $DarUserTempSpace of disk Space from $DarUserTemp"
+			rm -rf $DarUserTemp/*
+			#DarUserCaches
+			DarUserCaches="$(sudo -u "$UserUID" getconf DARWIN_USER_CACHE_DIR)"
+			DarUserCachesSpace="$(du -h -d 1 $DarUserCaches | awk 'END {print $1}')"
+			echo "Clearing $DarUserCachesSpace of disk Space from $DarUserCaches"
+			rm -rf $DarUserCaches/*
+			#UserLibCaches
+			UserLibCaches="${USERHOME}/Library/Caches"
+			UserLibCachesSpace="$(du -h -d 1 $UserLibCaches | awk 'END {print $1}')" #"Deleting", $1, "of disk Space from ~/Library/Caches"}')"
+			echo "Clearing $UserLibCachesSpace of disk Space from $UserLibCaches"
+			rm -rf "${USERHOME}"/Library/Caches/*
+			find "${USERHOME}"/Library/Logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete
+			#UserTrash DO NOT ENABLE
+			#UserTrash="/Users/$USERNAME/.Trash"
+			#UserTrashSpace="$(du -h -d 1 $UserTrash | awk 'END {print $1}')" #"Deleting", $1, "of disk Space from Trash"}')"
+			#echo "Clearing $UserTrashSpace of disk Space from $UserTrash"
+			#rm -rf /Users/"$USERNAME"/.Trash/*		
+		fi
+	done
+
+# Clean /Library/Caches , ~/Library/Caches, /private/tmp and .Trash
+echo "Clearing $LibCachesSpace of disk Space from $LibCaches"
+rm -rf /Library/Caches/*
+echo "Clearing $PvtTmpSpace of disk Space from $PvtTmp"
+rm -rf /private/tmp/*
+
+	
+ADSFull2="$(df -lh | grep "$MacHDD" | awk '{print $4}')"
+echo "Congratulations! Available disk Space is now at $ADSFull2."
+			#OOPS! If the user does not exist then $DarUser is not stored and therefore deletes /*
+			if [ -z $CheckUID ]; then
+				echo "No valid User ID for $UserUID"
+			else
+				#DarUser
+				DarUser="$(sudo -u "$UserUID" getconf DARWIN_USER_DIR)"
+				DarUserSpace="$(du -h -d 1 $DarUser | awk 'END {print $1}')"
+				echo "Listing files deleted for $UserUID." > "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Listing files deleted from $UserUID's DARWIN_USER_DIR" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Clearing $DarUserSpace of disk space from $DarUser" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				rm -rf $DarUser/* >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				#DarUserTemp
+				DarUserTemp="$(sudo -u "$UserUID" getconf DARWIN_USER_TEMP_DIR)"
+				DarUserTempSpace="$(du -h -d 1 $DarUserTemp | awk 'END {print $1}')"
+				echo "Listing files deleted from $UserUID's DARWIN_USER_TEMP_DIR" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Clearing $DarUserTempSpace of disk space from $DarUserTemp" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				rm -rf $DarUserTemp/* >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				#DarUserCaches
+				DarUserCaches="$(sudo -u "$UserUID" getconf DARWIN_USER_CACHE_DIR)"
+				DarUserCachesSpace="$(du -h -d 1 $DarUserCaches | awk 'END {print $1}')"
+				echo "Listing files deleted from $UserUID's DARWIN_USER_CACHE_DIR" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Listing files deleted from $UserUID's DARWIN_USER_DIR" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Clearing $DarUserCachesSpace of disk space from $DarUserCaches" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				rm -rf $DarUserCaches/* >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				#UserLibCaches
+				UserLibCaches="${USERHOME}/Library/Caches"
+				UserLibCachesSpace="$(du -h -d 1 $UserLibCaches | awk 'END {print $1}')" 
+				echo "Listing files deleted from $UserUID's $UserLibCaches" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Clearing $UserLibCachesSpace of disk space from $UserLibCaches" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				rm -rf "${USERHOME}"/Library/Caches/* >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Listing files deleted from $UserUID's /Library/Logs" >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				find "${USERHOME}"/Library/Logs/ -type f \( -name "*.bz2" -o -name "*.[0-9]" -o -name "*.gz" \) -delete >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				#UserTrash DO NOT ENABLE
+				UserTrash="/Users/$USERNAME/.Trash"
+				UserTrashSpace="$(du -h -d 1 $UserTrash | awk 'END {print $1}')"
+				echo "Trash is consuming $UserTrashSpace of disk space." >> "/Users/$UserUID/Desktop/DeletedFiles_$UserUID_$TodayDate-$TodayTime.txt"
+				#rm -rf /Users/"$USERNAME"/.Trash/*	
+				echo "Performing disk usage on /Users/$UserID. Check /Users/$UserUID/Desktop/ for text file diskusage_$UserUID_$TodayDate-$TodayTime.txt"
+				echo "Disk usage for $UserUID in /Users/$UserUID/" > /Users/$UserUID/Desktop/"diskusage_$UserUID_$TodayDate-$TodayTime.txt"
+				du -h -d 1 /Users/$UserUID >> /Users/$UserUID/Desktop/"diskusage_$UserUID_$TodayDate-$TodayTime.txt"
+			fi
+		fi
+	done
+
+	
+ADSFull2="$(df -lh | grep "$MacHDD" | awk '{print $4}')"
+echo "Previous disk space available for $HOSTNAME $ADSFull."
+echo "Congratulations! Available disk space on $MacHDD is now at $ADSFull2."
+	
+
+exit 0

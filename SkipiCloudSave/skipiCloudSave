@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Set document save default to local drive
+defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
