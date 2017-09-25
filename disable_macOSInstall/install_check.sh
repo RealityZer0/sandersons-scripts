@@ -4,10 +4,10 @@ OS_VERS="$(sw_vers | awk '/ProductVersion/ {print $2}')"
 
 if [[ "$OS_VERS" > "10.11" ]]; then
 	echo "macOS Sierra is installed. Sending report."
-else 
+else
 	echo "macOS Sierra is NOT installed. Checking for files."
 	echo "Checking installs receipt..."
-	defaults read /var/db/receipts/com.yp.RemoveSierra.plist PackageVersion
+	defaults read /var/db/receipts/com.domain.RemoveSierra.plist PackageVersion
 	if [ $? -ne 0 ]; then
 		echo "Receipt not found, installing..."
 		exit 0
