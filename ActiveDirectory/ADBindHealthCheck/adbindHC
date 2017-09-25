@@ -117,7 +117,7 @@ AD_bind()
 #==========#
 # Conditions
 #==========#
-# Confirm host can contact CORP
+# Confirm host can contact domain
 if ping -c 2 -o "${domain}"; then
 	isBoundtoAD=$(dscl localhost -read "/Active Directory/DOMAIN" DomainName 2>/dev/null | awk '{print $2}')
 	if [ "$isBoundtoAD" == "${domain}" ]; then

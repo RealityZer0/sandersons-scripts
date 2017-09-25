@@ -2,6 +2,6 @@
 
 SOURCE="/private/tmp/munkilogs"
 
-/bin/mkdir -p /usr/local/corp/tools &>/dev/null
-/bin/cp ${SOURCE}/CreateMunkiLogs /usr/local/corp/tools/ &>/dev/null
+/bin/mkdir -p /usr/local/scripts/tools &>/dev/null
+/bin/cp ${SOURCE}/CreateMunkiLogs /usr/local/scripts/tools/ &>/dev/null
 /bin/rm -rf ${SOURCE} &>/dev/null

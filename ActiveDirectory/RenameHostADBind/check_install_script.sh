@@ -19,7 +19,7 @@ else
 	exit 1
 fi
 
-# Checks that dsconfigad shows corp.yp.com
+# Checks that dsconfigad shows domain.com
 if [[ -z ${adInfo} ]]; then
 		echo  "DSConfigAD shows not bound to AD"
 	else

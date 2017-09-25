@@ -22,7 +22,7 @@
 # Get console user
 userName="$(ls -la /dev/console | awk '{print $3}')"
 # Remote smb connection
-smbConn="corp/ypzone/Software/Orchestrator-Mac"
+smbConn="domain/Software/Orchestrator-Mac"
 # Remote smb path
 smbPath="smb://path/to/share/"
 #Clean hostname

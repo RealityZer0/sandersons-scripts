@@ -23,7 +23,7 @@ userName="$(ls -la /dev/console | awk '{print $3}')"
 # Check if groupid belongs to AD groupid
 domain="domain.com" #try netbios ID if fails
 gID="12345"
-corpID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
+domainID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
 # macOS_LAdmin
 admGroupUID="5CE21128-C0DB-C3P0-R2D2-0000000000"
 osxAdm="$(/usr/bin/dscl . -read /Groups/admin NestedGroups|grep -c "${admGroupUID}")"

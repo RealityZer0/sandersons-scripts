@@ -22,10 +22,10 @@ export PATH
 #==========#
 # VARIABLES
 #==========#
-domain="CORP"
+domain="domain"
 user="svc_macosx_adbind"
 domainAns="$(dscl "/Active Directory/${domain}/All Domains" -read /Users/${user} dsAttrTypeNative:userPrincipalName)"
-if ping -c 2 -o "corp.yp.com"; then
+if ping -c 2 -o "domain.com"; then
 	if [[ $domainAns =~ "is not valid" ]]; then
     	result="Valid"
 		echo "$result"
@@ -35,7 +35,7 @@ if ping -c 2 -o "corp.yp.com"; then
 		echo "$result"
 	fi
 else
-	echo "No connection to $domain. Connect $HOSTNAME to YP LAN, YP WLAN or VPN and try again."
+	echo "No connection to $domain. Connect $HOSTNAME to DOMAIN LAN, WLAN or VPN and try again."
 fi
 
 exit 1

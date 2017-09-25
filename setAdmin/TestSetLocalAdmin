@@ -20,18 +20,18 @@ export PATH
 #==========#
 # VARIABLES
 #==========#
-domain="CORP"
+domain="domain"
 svcAccount="svc_bind_account"
 macOSAdmin="macOS-LAdmins"
 userName="$(ls -la /dev/console | awk '{print $3}')"
 domainAns="$(dscl "/Active Directory/${domain}/All Domains" -read /Users/${userName} sAMAccountName | awk '{print $2}')"
 gID="12345"
-corpID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
+domainID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
 # Check user is member of Active Directory
 queryAD="$(/usr/sbin/dseditgroup -o checkmember -n "/Active Directory/${domain}/All Domains" -m ${userName} -read "${macOSAdmin}" |awk 'FNR == 1 {print $1}')"
 
 # Check if root or macadmin is console user
-if [[ -z "${userName}" || "${corpID}" -eq 0 ]]; then
+if [[ -z "${userName}" || "${domainID}" -eq 0 ]]; then
   echo "Exiting script, invalid user." &>/dev/null
   exit 1
 fi

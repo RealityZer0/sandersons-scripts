@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==========#
 # ABOUT THIS SCRIPT:
-# NAME: SetCorpDNS
+# NAME: SetDOMAINDNS
 # SYNOPSIS: This will run as a munki install_check script
 #==========#
 # HISTORY:

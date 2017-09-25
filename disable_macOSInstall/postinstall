@@ -1,8 +1,8 @@
 #!/bin/bash
 macOSSierra="/Applications/Install macOS Sierra.app"
 remSierrald="/Library/LaunchDaemons/com.domain.removeSierra.plist"
-remSierra="/usr/local/corp/noSierra/removeSierra"
-noSierra="/usr/local/corp/noSierra/noSierra.app"
+remSierra="/usr/local/scripts/noSierra/removeSierra"
+noSierra="/usr/local/scripts/noSierra/noSierra.app"
 
 if [ -e "$macOSSierra" ]; then
 	echo "Deleting macOS Sierra installer"

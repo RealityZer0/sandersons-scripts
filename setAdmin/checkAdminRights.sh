@@ -26,13 +26,13 @@ domainAns="$(dscl "/Active Directory/${domain}/All Domains" -read /Users/${user}
 gID="12345"
 adminGroup="macos_admins"
 userName="$(ls -la /dev/console | awk '{print $3}')"
-corpID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
+domainID="$(/usr/bin/id -G ${userName} | grep -c ${gID})"
 userGrpMem="$(/usr/bin/dscl . -read /groups/admin GroupMembership | grep -oiw ${userName} | wc -w | awk '{print $1}')"
 
 
 
 # Check if root or macadmin is console user
-if [[ -z "${userName}" || "${corpID}" -eq 0 ]]; then
+if [[ -z "${userName}" || "${domainID}" -eq 0 ]]; then
   echo "Exiting script, invalid user." &>/dev/null
   exit 1
 fi

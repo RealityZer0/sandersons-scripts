@@ -50,8 +50,8 @@ hwForm="$(/usr/sbin/sysctl hw.model|awk '/Mac/ {print $2}'|tr -d \ "[0-9],"|cut 
 #==========#
 # Exit loginhook if GID does not equal domain GID
 gID="12345"
-corpID="$(/usr/bin/id -G ${userName}| grep -c ${gID})"
-if [ ${corpID} -eq 0 ]; then
+domainID="$(/usr/bin/id -G ${userName}| grep -c ${gID})"
+if [ ${domainID} -eq 0 ]; then
 	exit 1
 fi
 # Exit if not on domain

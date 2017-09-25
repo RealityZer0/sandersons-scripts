@@ -24,7 +24,6 @@ export PATH
 ADComp="$(dsconfigad -show | awk '/Computer Account/ {print $4}')"
 # Get current AD computer object name sans $
 ADComp_neat="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| tr '[:lower:]' '[:upper:]' | tr -d \$)"
-# Host check used to get rid of YPCMC
 #ADHostCheck="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| cut -c 1-4)"
 # Grab current console user
 userName="$(ls -la /dev/console | awk '{print $3}')"
@@ -35,7 +34,7 @@ compName="$(/usr/sbin/scutil --get ComputerName)"
 # Get current Local Host Name
 localHost="$(/usr/sbin/scutil --get LocalHostName)"
 # Check if Host Name is disabled
-ADComp_UAC="$(dscl "/Active Directory/CORP/All Domains" -read /Computers/$ADComp | awk '/userAccountControl/ {print $2}')"
+ADComp_UAC="$(dscl "/Active Directory/${domain}/All Domains" -read /Computers/$ADComp | awk '/userAccountControl/ {print $2}')"
 
 #==========#
 # AD Unbind Function
@@ -117,11 +116,11 @@ AD_bind()
 #==========#
 # Conditions
 #==========#
-# Confirm host can contact CORP
+# Confirm host can contact domain
 if ping -c 2 -o "$domain"; then
-	isBoundtoAD=$(dscl localhost -read "/Active Directory/CORP" DomainName 2>/dev/null | awk '{print $2}')
+	isBoundtoAD=$(dscl localhost -read "/Active Directory/${domain}" DomainName 2>/dev/null | awk '{print $2}')
 	if [ "$isBoundtoAD" == "$domain" ]; then
-			security find-generic-password -l "/Active Directory/CORP" | grep "Active Directory"
+			security find-generic-password -l "/Active Directory/${domain}" | grep "Active Directory"
 		if [ "$?" == "0" ]; then
 			## AD keychain entry exists
 			dscl "/Active Directory/Domain/All Domains" read /Computers/"$ADCompName" | grep -i "$ADCompName"

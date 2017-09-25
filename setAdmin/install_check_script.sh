@@ -20,22 +20,22 @@ export PATH
 #==========#
 # VARIABLES
 #==========#
-domain="CORP"
+domain="domain"
 svcAccount="svc_macosx_adbind"
 macOSAdmin="OSX_Local_Admins"
 userName="$(ls -la /dev/console | awk '{print $3}')"
 domainAns="$(dscl "/Active Directory/${domain}/All Domains" -read /Users/${userName} sAMAccountName | awk '{print $2}')"
-corpID="$(/usr/bin/id -G $userName | grep -c 40000)"
+domainID="$(/usr/bin/id -G $userName | grep -c 40000)"
 # Check user is member of Active Directory
-queryAD="$(/usr/sbin/dseditgroup -o checkmember -n "/Active Directory/CORP/All Domains" -m $userName -read "$macOSAdmin" |awk 'FNR == 1 {print $1}')"
+queryAD="$(/usr/sbin/dseditgroup -o checkmember -n "/Active Directory/domain/All Domains" -m $userName -read "$macOSAdmin" |awk 'FNR == 1 {print $1}')"
 
 # Check if root or macadmin is console user
-if [[ -z "$userName" || "$corpID" -eq 0 ]]; then
+if [[ -z "$userName" || "$domainID" -eq 0 ]]; then
   echo "Exiting script, invalid user." &>/dev/null
   exit 1
 fi
 
-if ping -o "corp.yp.com"; then
+if ping -o "domain.yp.com"; then
 	if [[ "$domainAns" =~ "is not valid" ]]; then
 		echo "Not bound to $domain domain."&>/dev/null
 		exit 1

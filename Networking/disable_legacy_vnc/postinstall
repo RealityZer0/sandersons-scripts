@@ -3,7 +3,7 @@
 SOURCE="/private/tmp/enard"
 
 /bin/cp $SOURCE/com.domain.enable-ard.plist /Library/LaunchDaemons/ &>/dev/null
-/bin/mkdir -p /usr/local/corp &>/dev/null
-/bin/cp $SOURCE/enable-ard.sh /usr/local/corp/ &>/dev/null
+/bin/mkdir -p /usr/local/scriptsw &>/dev/null
+/bin/cp $SOURCE/enable-ard.sh /usr/local/scripts/ &>/dev/null
 /bin/launchctl load /Library/LaunchDaemons/com.domain.enable-ard.plist &>/dev/null
 /bin/rm -rf $SOURCE &>/dev/null

@@ -3,7 +3,7 @@
 PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
 export PATH
 
-MunkiLogs="/usr/local/corp/tools/CreateMunkiLogs"
+MunkiLogs="/usr/local/scripts/tools/CreateMunkiLogs"
 
 if [ -e "$MunkiLogs" ]; then
       /usr/bin/open -F -n -a /Applications/Utilities/Terminal.app "$MunkiLogs"

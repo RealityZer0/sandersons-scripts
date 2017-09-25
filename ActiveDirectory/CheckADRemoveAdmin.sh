@@ -3,10 +3,10 @@ userName="(ls -la /dev/console | awk '{print $3}')"
 domain="domain.com"
 checkHost="(/usr/bin/host ${domain} |awk 'FNR == 1 {print $1}')"
 gID="12345"
-corpID="(/usr/bin/id -G $userName | grep -c ${gID})"
+domainID="(/usr/bin/id -G $userName | grep -c ${gID})"
 adGroup="adGroupHere"
 
-if [[ $corpID -eq 0 ]]; then
+if [[ $domainID -eq 0 ]]; then
 	exit 1
 fi
 #Checks that the domain host is available
