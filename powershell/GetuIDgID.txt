@@ -1,0 +1,6 @@
+$TDate = Get-Date
+$CurrentDate = $TDate.ToString('MM-dd-yyyy_hh-mm-ss')
+$UserName = "$env:USERNAME"
+$ReportsLoc = "C:\Users\$UserName\Reports"
+$TGTUser = read-host "Enter the Users Name"
+Get-ADUser $TGTUser -Properties displayname,uidnumber,gidnumber,SamAccountName -Server DC-SRVR | Select-Object	DisplayName,SamAccountName,uidnumber,gidnumber|	Format-List | export-csv $ReportsLoc\user-uIDgID-$CurentDate.csv -NoTypeInformation -Append

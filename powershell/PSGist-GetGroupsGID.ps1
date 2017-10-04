@@ -1,0 +1,1 @@
+﻿Get-ADGroup -LDAPFilter "(gidNumber=*)" -Properties gidNumber | Select gidNumber

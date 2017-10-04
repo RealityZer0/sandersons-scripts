@@ -1,0 +1,2 @@
+﻿$x=
+(((Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\| ?{$_.name -like "*$env:USERNAME*"}).Name).Replace("#","\")).replace("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\","")
