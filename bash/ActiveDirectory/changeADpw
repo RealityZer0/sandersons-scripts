@@ -1,0 +1,1 @@
+dscl -u USERNAME -p "/Active Directory/CORP/All Domains" -passwd /Users/USERNAME
