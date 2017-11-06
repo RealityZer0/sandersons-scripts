@@ -1,0 +1,10 @@
+#sed using Extended, 's=substitute, the / = a separator, the < is for html angle brackets, the bracket [ begins our character set(anything listed inside), ^ inside brackets means NOT, <> ],+ means more than one, / is an escape character followed by blank/nothing for our replacement character ,g means globally (not just the first instance)
+sed -E 's/<[^<>]+>//g' homepage.html 
+
+#sed using Extended (or you have to escape the parenthesis), 's=substitue / is a separator, (...) group of any three characters before 'time', / is the separator, \1 is the first backreference for the first 3 characters found (can have up to 9).
+echo 'daytime' | sed -E 's/(...)time/\1light/'
+
+
+
+#sed using Extended, 's = substitute, / is a separator, ( starts the group with a, [ starts a range, starting with UPPERCASE letters A-Za-z and is followed with lowercase letters], + means more than one), followed by a space then repeats the pattern above, \2 Make the second backreference, followed by a comma, \1 then add the first back reference.
+echo "Dan Stevens" | sed -E 's/([A-Za-z]+) ([A-Za-z]+)/\2, \1/'
