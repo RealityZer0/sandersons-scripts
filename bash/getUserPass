@@ -1,23 +1,23 @@
 #!/bin/bash
 userName="$(ls -la /dev/console | awk '{print $3}')"
-finder="/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder"
-smbPath="smb://path/to/networkShare"
+#finder="/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder"
+#smbPath="smb://path/to/networkShare"
 # Click Always allow
-tell application "System Events"
-	repeat while exists (processes where name is "SecurityAgent")
-		tell process "SecurityAgent"
-			click button 2 of group 1 of window 1
-		end tell
-		delay 0.2
-	end repeat
-end tell
+#tell application "System Events"
+	#repeat while exists (processes where name is "SecurityAgent")
+		#tell process "SecurityAgent"
+			#click button 2 of group 1 of window 1
+		#end tell
+		#delay 0.2
+	#end repeat
+#end tell
 #localPath="/Users/$userName/Orchestrator-Mac"
 getPW="$(security 2>&1 >/dev/null find-generic-password -wa $userName /Users/$userName/Library/Keychains/login.keychain)"
 
 #sudo -u "$userName" mkdir "$localPath"
 #sleep 5
-sudo -u "$userName" -p "$getPW" open -g "$smbPath"
-chflags hidden /Volumes/path/to/dir
+#sudo -u "$userName" -p "$getPW" open -g "$smbPath"
+#chflags hidden /Volumes/path/to/dir
 #sudo -u "$userName" mount -t smbfs "$smbPath" "$localPath"
 
 exit 0
