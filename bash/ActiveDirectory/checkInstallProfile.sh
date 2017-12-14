@@ -47,7 +47,7 @@ if ping -c 2 -o "${domain}"; then
 		fi
 	fi
 else
-	echo "No connection to "$domain". Connect $HOSTNAME to company LAN, YP WLAN or VPN and try again."
+	echo "No connection to "$domain". Connect $HOSTNAME to company LAN, company WLAN or VPN and try again."
 fi
 
 exit 1

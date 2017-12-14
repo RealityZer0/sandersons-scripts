@@ -1,0 +1,131 @@
+#!/usr/bin/python
+# encoding: utf-8
+#
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS: 
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian 
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+
+import os
+import sys
+import shutil
+
+from munkilib import munkicommon
+from munkilib import updatecheck
+from munkilib import FoundationPlist
+
+#SECURE_MANAGED_INSTALLS_PLIST_PATH = munkicommon.SECURE_MANAGED_INSTALLS_PLIST_PATH
+
+def getmanifest(manifest):
+    """Fetch manifests from 'manifesturl'
+    
+    This may be called recursively such that
+    'included_manifests' are fetched
+    """
+    if isinstance(manifest, basestring):
+        message = None
+        manifesturl = manifestbaseurl + manifest
+        manifestpath = os.path.join(manifest_dir, manifest)
+        try:
+            unused_value = updatecheck.getResourceIfChangedAtomically(
+                manifesturl, manifestpath, message=message)
+        except:
+            if isinstance(manifest, basestring) and manifest == clientidentifier:
+                print 'Primary manifest "%s" could not be retrieved' % clientidentifier
+                sys.exit(1)
+            else:
+                print "Unable to fetch %s" % manifesturl
+                return
+        manifestdata = updatecheck.getManifestData(manifestpath)
+    else:
+        manifestdata = manifest
+        manifest = 'embedded manifest'
+
+    nestedmanifests = manifestdata.get('included_manifests')
+    if nestedmanifests:
+        for item in nestedmanifests:
+            getmanifest(item)
+
+    conditionalitems = manifestdata.get('conditional_items')
+    if conditionalitems:
+        for item in conditionalitems:
+            getmanifest(item)
+
+
+def removepath(path):
+    """Remove file or directory at 'path'"""
+    if os.path.exists(path):
+        try:
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.unlink(path)
+        except:
+            print '%s could not be removed!' % path
+    else:
+        print '%s was not found!' % path
+
+
+def checkSoftwareRepoURL(manifestbaseurl):
+    """Verify that manifest URL is valid and reachable"""
+    result = updatecheck.checkServer(manifestbaseurl)
+    if result != (0, 'OK'):
+        print "getmanifest: server check for %s failed: %s" % (manifestbaseurl, str(result))
+        return False
+    return True
+
+
+### Ensure that the 'secure' preferences exist
+#if not os.path.exists(SECURE_MANAGED_INSTALLS_PLIST_PATH):
+#    print "%s does not exist!" % SECURE_MANAGED_INSTALLS_PLIST_PATH
+#    sys.exit(1)
+
+manifest_dir = munkicommon.pref('ManifestURL')
+manifest_dir = manifest_dir.split(':')[1]
+clientidentifier = munkicommon.pref('ClientIdentifier')
+
+### Setup manifest url 
+manifestbaseurl = munkicommon.pref('SoftwareRepoURL') + '/manifests/'
+if not manifestbaseurl.endswith('?') and \
+   not manifestbaseurl.endswith('/'):
+    manifestbaseurl = manifestbaseurl + '/'
+
+if checkSoftwareRepoURL(manifestbaseurl):
+    print 'Fetching manifest(s) from "%s"' % manifestbaseurl
+    plist = FoundationPlist.readPlist(plistpath)
+    plist.setValue_forKey_(munkicommon.pref('SoftwareRepoURL'),'SoftwareRepoURL')
+    FoundationPlist.writePlist(plist, plistpath)
+else:
+    manifestbaseurl = munkicommon.pref('SoftwareRepoURL') + '/manifests/'
+    if not manifestbaseurl.endswith('?') and \
+       not manifestbaseurl.endswith('/'):
+        manifestbaseurl = manifestbaseurl + '/'
+    if checkSoftwareRepoURL(manifestbaseurl):
+        print 'Fetching manifest(s) from "%s"' % manifestbaseurl
+        plist = FoundationPlist.readPlist(plistpath)
+        plist.setValue_forKey_(munkicommon.pref('SoftwareRepoURL'),'SoftwareRepoURL')
+        FoundationPlist.writePlist(plist, plistpath)
+    else:
+        sys.exit(1)
+
+### Purge existing manifest directory if it exists
+if os.path.exists(manifest_dir):
+    removepath(manifest_dir)
+
+### Create manifest directory
+os.makedirs(manifest_dir)
+
+### Start manifest fetch...
+getmanifest(clientidentifier)
+
+sys.exit(0)
+

@@ -1,0 +1,31 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Printers CA02
+# SYNOPSIS: This will run as a munki install_check script
+# exit status of 0 means install needs to run
+# exit status not 0 means no installation necessary
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 7/20/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+#
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+mac-psrv="/Volumes/mac-print-server"
+if [[ ! -e "$mac-psrv" ]]; then
+	open -a "Finder" smb://fqdn.domain.com/mac-print-server
+else
+	exit 0
+fi
+
+exit 0

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+SOURCE="/private/tmp/madminterm"
+osvers=$(sw_vers -productVersion | awk -F. '{print $2}')
+MACPRFL="$(/usr/bin/dscl . -profilelist /Users/macadmin | awk '/Profile Identifier:/ {print $3}')"
+mahome="/var/home/macadmin"
+
+if [ $osvers -lt 9 ]; then
+	echo "This system does not support dscl profile commands"
+	exit 1
+fi
+
+
+if [ -z $MACPRFL ]; then
+	/usr/bin/dscl . -profileimport /Users/macadmin $SOURCE/MacadminTerminal.mobileconfig
+else
+	/usr/bin/dscl . -profiledelete /Users/macadmin $MACPRFL
+	/usr/bin/dscl . -profileimport /Users/macadmin $SOURCE/MacadminTerminal.mobileconfig
+fi
+/usr/bin/killall "Terminal"
+/bin/rm -rf $SOURCE
+
+exit 0

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>PayloadIdentifier</key>
+		<string>com.apple.mdm.domain.2e8cdca0-05e1-0134-5147-48bcc8f51db0.alacarte</string>
+		<key>PayloadRemovalDisallowed</key>
+		<true/>
+		<key>PayloadScope</key>
+		<string>System</string>
+		<key>PayloadType</key>
+		<string>Configuration</string>
+		<key>PayloadUUID</key>
+		<string>2e8cdca0-05e1-0134-5147-48bcc8f51db0</string>
+		<key>PayloadOrganization</key>
+		<string>DOMAIN</string>
+		<key>PayloadVersion</key>
+		<integer>1</integer>
+		<key>PayloadDisplayName</key>
+		<string>App Store Restrictions</string>
+		<key>PayloadContent</key>
+		<array>
+			<dict>
+				<key>PayloadDescription</key>
+				<string>Configures Configuration Profile security</string>
+				<key>PayloadDisplayName</key>
+				<string>Profile Security</string>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.2e8cdca0-05e1-0134-5147-48bcc8f51db0.alacarte.ProfileSecurity</string>
+				<key>PayloadType</key>
+				<string>com.apple.profileRemovalPassword</string>
+				<key>PayloadUUID</key>
+				<string>bd44d2d0-358d-0134-51a9-48bcc8f51db0</string>
+				<key>RemovalPassword</key>
+				<string>password</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>PayloadType</key>
+				<string>com.apple.systempreferences</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.2e8cdca0-05e1-0134-5147-48bcc8f51db0.alacarte.macosxrestrictions.a924ec60-358c-0134-51a6-48bcc8f51db0.systempreferences</string>
+				<key>PayloadEnabled</key>
+				<true/>
+				<key>PayloadUUID</key>
+				<string>b2a3794c-292c-07df-d870-7dba49d99948</string>
+				<key>PayloadDisplayName</key>
+				<string>System Preferences</string>
+				<key>DisabledPreferencePanes</key>
+				<array>
+					<string>com.apple.preferences.appstore</string>
+					<string>com.apple.preferences.softwareupdate</string>
+				</array>
+			</dict>
+			<dict>
+				<key>PayloadType</key>
+				<string>com.apple.desktop</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.2e8cdca0-05e1-0134-5147-48bcc8f51db0.alacarte.macosxrestrictions.a924ec60-358c-0134-51a6-48bcc8f51db0.desktop</string>
+				<key>PayloadEnabled</key>
+				<true/>
+				<key>PayloadUUID</key>
+				<string>698df792-8e1e-9b51-ea53-f56e913ef984</string>
+				<key>PayloadDisplayName</key>
+				<string>Desktop</string>
+			</dict>
+			<dict>
+				<key>PayloadType</key>
+				<string>com.apple.SoftwareUpdate</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.2e8cdca0-05e1-0134-5147-48bcc8f51db0.alacarte.softwareupdate.7f641a80-05e1-0134-5149-48bcc8f51db0</string>
+				<key>PayloadUUID</key>
+				<string>7f641a80-05e1-0134-5149-48bcc8f51db0</string>
+				<key>PayloadEnabled</key>
+				<true/>
+				<key>PayloadDisplayName</key>
+				<string>Software Update</string>
+				<key>AllowPreReleaseInstallation</key>
+				<false/>
+				<key>updated_at_xid</key>
+				<integer>62492</integer>
+			</dict>
+		</array>
+	</dict>
+</plist>

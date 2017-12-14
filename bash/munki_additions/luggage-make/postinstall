@@ -1,0 +1,60 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS: 
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Scott Anderson on 8/22/2016
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+# 
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+currentUser="$(ls -la /dev/console | awk '{print $3}')"
+TARGET_VOL="$3"
+
+#Exit if Target Volume is not / (Root of Macintosh HD)
+
+if [ "$TARGET_VOL" != "/" ]; then
+	exit 0
+fi
+
+
+if [[ "$currentUser" != "root" || "$currentUser" != "loginwindow" ]]; then
+
+	#### Unload munki related LaunchAgents 
+	#su $currentUser -c '/bin/launchctl unload -S Aqua /Library/LaunchAgents/com.googlecode.munki.MunkiStatus.plist' &>/dev/null
+	su $currentUser -c '/bin/launchctl unload -S Aqua /Library/LaunchAgents/com.googlecode.munki.ManagedSoftwareUpdate.plist &>/dev/null' &>/dev/null
+	#### Unload munki related LaunchDaemons 
+	
+	#su $currentUser -c '/bin/launchctl load -S Aqua /Library/LaunchAgents/com.googlecode.munki.MunkiStatus.plist' &>/dev/null
+	su $currentUser -c '/bin/launchctl load -S Aqua /Library/LaunchAgents/com.googlecode.munki.ManagedSoftwareUpdate.plist &>/dev/null' &>/dev/null
+fi
+
+#### Unload munki related LaunchDaemons
+/bin/launchctl unload /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-manualcheck.plist &>/dev/null
+/bin/launchctl unload /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-install.plist &>/dev/null
+/bin/launchctl unload /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-check.plist &>/dev/null
+/bin/launchctl unload /Library/LaunchDaemons/com.googlecode.munki.logouthelper.plist &>/dev/null
+
+#### Load munki related LaunchDaemons
+/bin/launchctl load /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-manualcheck.plist &>/dev/null
+/bin/launchctl load /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-install.plist &>/dev/null
+/bin/launchctl load /Library/LaunchDaemons/com.googlecode.munki.managedsoftwareupdate-check.plist &>/dev/null
+/bin/launchctl load /Library/LaunchDaemons/com.googlecode.munki.logouthelper.plist &>/dev/null
+
+#Remove cached ManagedInstalls preferences
+rm -rf "/Library/Managed Installs/InstallInfo.plist"
+defaults read /var/root/Library/Preferences/ManagedInstalls.plist &>/dev/null
+defaults read /Library/Preferences/ManagedInstalls.plist &>/dev/null
+
+exit 0

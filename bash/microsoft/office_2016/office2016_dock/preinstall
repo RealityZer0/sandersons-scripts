@@ -1,0 +1,10 @@
+#!/bin/sh
+
+USERNAME="$(ls -la /dev/console | awk '{print $3}')"
+
+if [ $USERNAME == "root" ]; then
+    /usr/bin/logger "Exiting Dock icon script for $USERNAME logging in."
+    exit 1
+fi
+
+exit 0

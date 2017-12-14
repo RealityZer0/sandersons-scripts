@@ -1,0 +1,13 @@
+#!/bin/bash
+pkgName="DefaultAdminPrefs"
+pkgVersion="1.0"
+domain="domain"
+pkgbuild --root payload --install-location "/" \
+--scripts scripts --identifier com.${domain}.$pkgName \
+--version $pkgVersion $pkgName-$pkgVersion.pkg
+
+#hdiutil create \
+#-volname $pkgName-$pkgVersion \
+#-srcfolder $pkgName-$pkgVersion.pkg \
+#-ov \
+#$pkgName-$pkgVersion.dmg

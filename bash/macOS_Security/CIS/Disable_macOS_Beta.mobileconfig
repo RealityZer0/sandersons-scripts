@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>PayloadIdentifier</key>
+		<string>com.apple.mdm.domain.02edd0b0-05da-0134-5138-48bcc8f51db0.alacarte</string>
+		<key>PayloadRemovalDisallowed</key>
+		<true/>
+		<key>PayloadScope</key>
+		<string>System</string>
+		<key>PayloadType</key>
+		<string>Configuration</string>
+		<key>PayloadUUID</key>
+		<string>02edd0b0-05da-0134-5138-48bcc8f51db0</string>
+		<key>PayloadOrganization</key>
+		<string>DOMAIN</string>
+		<key>PayloadVersion</key>
+		<integer>1</integer>
+		<key>PayloadDisplayName</key>
+		<string>Disable macOS Beta</string>
+		<key>PayloadContent</key>
+		<array>
+			<dict>
+				<key>PayloadDescription</key>
+				<string>Configures Configuration Profile security</string>
+				<key>PayloadDisplayName</key>
+				<string>Profile Security</string>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.02edd0b0-05da-0134-5138-48bcc8f51db0.alacarte.ProfileSecurity</string>
+				<key>PayloadType</key>
+				<string>com.apple.profileRemovalPassword</string>
+				<key>PayloadUUID</key>
+				<string>2800db40-05da-0134-513c-48bcc8f51db0</string>
+				<key>RemovalPassword</key>
+				<string>password</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>PayloadType</key>
+				<string>com.apple.SoftwareUpdate</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.02edd0b0-05da-0134-5138-48bcc8f51db0.alacarte.softwareupdate.201c9d30-05da-0134-5139-48bcc8f51db0</string>
+				<key>PayloadUUID</key>
+				<string>201c9d30-05da-0134-5139-48bcc8f51db0</string>
+				<key>PayloadEnabled</key>
+				<true/>
+				<key>PayloadDisplayName</key>
+				<string>Software Update</string>
+				<key>AllowPreReleaseInstallation</key>
+				<false/>
+				<key>updated_at_xid</key>
+				<integer>62403</integer>
+			</dict>
+		</array>
+	</dict>
+</plist>

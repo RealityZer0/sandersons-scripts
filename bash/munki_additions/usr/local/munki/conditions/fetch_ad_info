@@ -1,0 +1,90 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS:
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#  This condition_script supplies:
+# aduser_groups (array): a list of AD groups the current user is a member of.
+# adcomputer_groups (array): a list of AD groups this machine is a member of.
+# Requirements:
+# AD policy groups setup where this machine is a member
+# Usage:
+# To have awesome_package install only when this machine is a member of
+# the 'awesome_computers' AD group use the following condition:
+#
+#
+# (case and diacritic insensitive)
+# <key>conditional_items</key>
+# <array>
+# 	<dict>
+#		<key>condition</key>
+#		<string>ANY adcomputer_groups MATCHES[cd] 'awesome_computers'</string>
+#		<key>managed_installs</key>
+#		<array>
+#			<string>awesome_package</string>
+#		</array>
+#	</dict>
+# </array>
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+PLISTBUDDY="/usr/libexec/PlistBuddy"
+computer_name="$(systemsetup -getcomputername | awk '{ print $3 }')"
+current_user="$(ls -la /dev/console | awk '{print $3}')"
+plist_loc="/Library/Managed Installs/ConditionalItems.plist"
+ad_plist_loc="/Library/Managed Installs/ADGroups.plist"
+on_domain=($(dig -t SRV _service._tcp.domain.com | awk '/^domain.com/ {print $1}'| sed s/.$//))
+
+IFS=$'\n'
+ad_domain=($(dsconfigad -show | awk '/Active Directory Domain/ {print $5}'))
+aduser_groups=($(dscl '/Active Directory/DOMAIN/domain.com' -read /Users/"$current_user"/ memberOf 2>/dev/null | awk '{ FS = "[=,]" ; print $2 }'))
+adcomputer_groups=($(dscl '/Active Directory/DOMAIN/domain.com' -read /Computers/"$computer_name"$ memberOf 2>/dev/null | awk -F"[=,]" '{print $2}'))
+# Verify Munki is on CORP network. Exit if not as report to server will fail.
+#Consider creating a method for storing the file for a future push.
+domain="domain.com"
+if ping -c 2 -o $domain &>/dev/null; then
+	echo "$domain network connection successful."
+	defaults write "$plist_loc" "current_user" -array "${current_user[@]}"
+	defaults write "$plist_loc" "computer_name" -array "${computer_name[@]}"
+	defaults write "$plist_loc" "ad_domain" -array "${ad_domain[@]}"
+	defaults write "$plist_loc" "aduser_groups" -array "${aduser_groups[@]}"
+	defaults write "$plist_loc" "adcomputer_groups" -array "${adcomputer_groups[@]}"
+	defaults write "$plist_loc" "on_domain" -array "${on_domain[@]}"
+	defaults write "$ad_plist_loc" "current_user" -array "${current_user[@]}"
+	defaults write "$ad_plist_loc" "computer_name" -array "${computer_name[@]}"
+	defaults write "$ad_plist_loc" "ad_domain" -array "${ad_domain[@]}"
+	defaults write "$ad_plist_loc" "aduser_groups" -array "${aduser_groups[@]}"
+	defaults write "$ad_plist_loc" "adcomputer_groups" -array "${adcomputer_groups[@]}"
+
+else
+	echo "Not on corporate network."
+	#rm -f "$plist_loc"
+	# Copy ADGroup.plist to plist_loc
+	if [[ -e "$ad_plist_loc" ]]; then
+		$PLISTBUDDY -c "Merge '$ad_plist_loc'" "$plist_loc"
+	else
+		echo "ADGroups list does not exist."
+	fi
+	defaults write "$plist_loc" "current_user" -array "${current_user[@]}"
+	defaults write "$plist_loc" "computer_name" -array "${computer_name[@]}"
+	defaults write "$plist_loc" "on_domain" -array "${on_domain[@]}"
+
+fi
+plutil -convert xml1 "$plist_loc"
+plutil -convert xml1 "$ad_plist_loc"
+chmod 644 "$ad_plist_loc"
+
+exit 0

@@ -35,7 +35,7 @@ if [[ -z "$userName" || "$domainID" -eq 0 ]]; then
   exit 1
 fi
 
-if ping -o "domain.yp.com"; then
+if ping -o "domain.com"; then
 	if [[ "$domainAns" =~ "is not valid" ]]; then
 		echo "Not bound to $domain domain."&>/dev/null
 		exit 1
@@ -49,7 +49,7 @@ if ping -o "domain.yp.com"; then
 		fi
 	fi
 else
-	echo "No connection to $domain. Connect $HOSTNAME to YP LAN, YP WLAN or VPN and try again."
+	echo "No connection to $domain. Connect $HOSTNAME to Company LAN, WLAN or VPN and try again."
 fi
 
 exit 1

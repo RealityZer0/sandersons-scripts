@@ -1,0 +1,7 @@
+#!/bin/sh
+
+SOURCE="/private/tmp/unsccm"
+
+/bin/sh $SOURCE/CMUninstall -c
+/bin/rm -rf "/Library/Application Support/Microsoft/CCM"
+exit 0

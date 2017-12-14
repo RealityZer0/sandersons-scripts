@@ -1,0 +1,123 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Munki Health Check Munki 3
+# SYNOPSIS: Script called by the LaunchDaemon to check pkg receipts and files.
+# If ! -e then download latest version and install
+#==========#
+# HISTORY:
+# Version 1.2
+# Created by Scott Anderson on 8/22/2016
+# Revision Date 11/08/2017
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+#NA
+
+DEPLOY=false
+IFS=$'\n'
+
+receipts=(
+com.googlecode.munki.launchd
+com.googlecode.munki.core
+com.googlecode.munki.app
+)
+
+## Using pkg receipts, repair permissions
+for pkgid in ${receipts[@]}; do
+    /usr/sbin/pkgutil --repair "$pkgid" &>/dev/null
+done
+
+## Verify that a basic munki version check functions normally
+if ! /usr/local/munki/managedsoftwareupdate -V &>/dev/null; then
+    echo "managedsoftwareupdate sanity check failed..."
+    DEPLOY=true
+fi
+
+## Verify if any of the listed receipts are missing
+for pkgid in ${receipts[@]}; do
+    if pkgutil --pkg-info "$pkgid" &>/dev/null; then
+        verified_receipts+=( $pkgid )
+    else
+        echo "Receipt missing - $pkgid"
+        DEPLOY=true
+    fi
+done
+
+## Verify that all files detailed in receipt are present
+for pkgid in ${verified_receipts[@]}; do
+    for item in `pkgutil --files $pkgid`; do
+        if [ ! -e "/$item" ]; then
+           echo "/$item missing..."
+           DEPLOY=true
+        fi
+    done
+done
+
+
+
+if ! $DEPLOY; then
+    exit 0
+fi
+
+echo "munkitools health check failed!"
+
+## We know that the health check has failed,
+## but let's ensure that a managedsoftware update process
+## is NOT in progress (could represent a false positive)
+msuprocess=$(ps -eo pid=pid,command=cmnd | cut -f2- -d ' ' | awk '$1~/python/' | awk '$2~/managedsoftwareupdate/')
+
+if [ ! -z "$msuprocess" ]; then
+    echo "managedsoftwareupdate process running..."
+    echo "exiting to avoid possible race condition."
+    exit 0
+fi
+
+## Reinstallation
+TMPDIR=`mktemp -d /tmp/XXXXXX`
+URL="https://munkibuilds.org/"
+
+trap 'echo "Exiting..."; rm -rf "${TMPDIR}"; hdiutil detach "${dev_name}" -force &>/dev/null' INT TERM EXIT
+#DATE="$(date "+%d-%b-%y")" Use with curl -z!
+#FILE="munkitools3-latest.dmg"
+FILE=`curl -L -i --max-time 20 --silent --fail "$URL" 2>/dev/null | grep -o -E 'href="munkitools3-latest.pkg"' | cut -d'"' -f2 | sort | uniq | tail -1`
+
+if [ -z "$FILE" ]; then
+    echo "Unable to retrieve file listing!"
+    exit 1
+fi
+
+echo "Downloading $FILE to "$TMPDIR/munkitools3-latest.pkg""
+
+if ! curl -L --max-time 20 --silent --fail "$URL/$FILE" -o "$TMPDIR/munkitools3-latest.pkg" 2>/dev/null; then
+    echo "$FILE retrieval failed!"
+    exit 1
+fi
+
+hdiutil create -srcfolder "${TMPDIR}/munkitools3-latest.pkg" "${TMPDIR}/munkitools3-latest.dmg"
+
+if mnt_name="$(hdiutil attach "${TMPDIR}/munkitools3-latest.dmg" -nobrowse -mountrandom /tmp | tail -1 | grep -Eo "(\/private.*)")"; then
+	dev_name="$(df -h | grep "${mnt_name}" | awk '{print $1}')"
+	friendly_name="${mnt_name##*/}"
+	pkg_name="$(ls "${mnt_name}" | grep -iE "\.mpkg|\.pkg" | grep -ivE "uninstall|extras|remove")"
+	if [ ! -z "${pkg_name}" ] && [ ! -z "${mnt_name}" ]; then
+		install_path="${mnt_name}"/"${pkg_name}"
+	else
+		hdiutil detach "${dev_name}" -force &>/dev/null
+	fi
+else
+    echo "Unable to mount ${TMPDIR}/munkitools3-latest.pkg"
+    exit 1
+fi
+
+echo "Installing ${install_path}..."
+installer -pkg "${install_path}" -target /
+
+hdiutil detach "${dev_name}" -force &>/dev/null
+
+exit 0

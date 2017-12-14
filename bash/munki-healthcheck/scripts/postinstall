@@ -1,0 +1,37 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Munki Health Check for Munki 3
+# SYNOPSIS: Change flags for munki LaunchDaemons
+#==========#
+# HISTORY:
+# Version 1.2
+# Created by Scott Anderson on 8/22/2016
+# Revision Date 11/08/2017
+#==========#
+# VARIABLES
+#==========#
+libLD="/Library/LaunchDaemons"
+ulc="/usr/local/scripts"
+asset1="munkihc"
+asset2="com.domain.munki-healthcheck.plist"
+munkihc="${ulc}/${asset1}"
+munkild="${libLD}/${asset2}"
+source="/private/tmp/mhc"
+
+# Copy assets
+/bin/mkdir -p "${source}"
+/usr/bin/chflags noschg "${ulc}"
+/bin/cp "${source}/${asset1}" "${ulc}"/
+/bin/cp "${source}/${asset2}" "${libLD}"/
+
+# Load LaunchDaemons and change permissions
+/bin/launchctl load "${munkild}" 2>/dev/null
+/bin/launchctl start "${munkild}" 2>/dev/null
+/usr/bin/chflags schg "${munkild}" 2>/dev/null
+/usr/bin/chflags schg "${munkihc}" 2>/dev/null
+
+# Delete source
+/bin/rm -rf "${source}"
+
+exit 0

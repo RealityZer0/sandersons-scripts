@@ -1,0 +1,209 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: HostRenameADBind
+# SYNOPSIS: Rename hosts and bind to Active Directory
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 3/8/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+# Parts of this were borrowed from Graham Gilbert
+# https://github.com/grahamgilbert/macscripts/blob/master/AD%20Bind/postinstall#L256
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+# Check domain connection
+AD_HOST="$(/usr/bin/host domain.com |awk 'FNR == 1 {print $1}')"
+# Checks AD bind status
+AD_INFO="$(dsconfigad -show | grep "Active Directory Domain" | sed -e 's/.*=\ //')"
+# Confirms AD bind status
+AD_CONF="$(dscl localhost -read "/Active Directory/DOMAIN"|grep "AccountName:"|awk '{print $2}')"
+# Get AD Computer Object Name
+ADCOMP="$(dsconfigad -show | awk '/Computer Account/ {print $4}'| cut -c 1-5)" #tr -d \$)"
+# Grab current console user
+USERNAME="$(ls -la /dev/console | awk '{print $3}')"
+# Get current Host Name
+HOST_NAME="$(/usr/sbin/scutil --get HostName)"
+# Get current Computer Name (for Bonjour)
+COMP_NAME="$(/usr/sbin/scutil --get ComputerName 2>/dev/null)"
+# Get current Local Host Name
+LOCAL_HOST_NAME="$(/usr/sbin/scutil --get LocalHostName| awk '{print $1}')"
+# Get Employee location
+EMPLOC="$(dscl "/Active Directory/DOMAIN/domain.com" -read /Users/$USERNAME/ dsAttrTypeNative:extensionAttribute1| awk '{print $2}')"
+# Get Employee ID
+EMPID="$(dscl "/Active Directory/DOMAIN/domain.com" -read /Users/$USERNAME/ dsAttrTypeNative:employeeID| awk '{print $2}'| tr '[:lower:]' '[:upper:]' )"
+# Hostname identifier for Mac laptops
+MAC_LAP="ML"
+# Hostname identifier for Mac desktops
+MAC_DESK="MD"
+# Get Hardware format MacBook or Mac Mini or other
+HWFORM="$(/usr/sbin/sysctl hw.model|awk '/Mac/ {print $2}'|tr -d \ "[0-9],"|cut -c 1-7)"
+#==========#
+# Conditions (Move to Munki check install script)
+#==========#
+
+# Exit if GID does not equal DOMAIN 40000
+DOMAINID="$(/usr/bin/id -G $USERNAME| grep -c 40000)"
+if [ $DOMAINID -eq 0 ]; then
+	exit 1
+fi
+# Exit if not on domain
+if [ "$AD_HOST" != "domain.com" ]; then
+	echo "Exiting. Not on domain"
+	exit 1
+fi
+
+
+if [ "$AD_INFO" != "domain.com" ]; then
+		echo "Not bound to AD"
+		exit 1
+fi
+#==========#
+# Commands (DO NOT EDIT PAST THIS POINT)
+#==========#
+# Set variable for hostnames based on naming standards (host, localhost and computer)
+#==========#
+if [ "$HWFORM" == "MacBook" ]; then
+	NEWHOST=$EMPLOC$MAC_LAP$EMPID
+else
+	NEWHOST=$EMPLOC$MAC_DESK$EMPID
+fi
+#==========#
+# Change hostnames (host, localhost and computer)
+#==========#
+set_host()
+{
+    /usr/sbin/scutil --set LocalHostName "$client_name"
+	defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName "$client_name"
+	/usr/sbin/scutil --set HostName "$client_name"
+	/usr/sbin/scutil --set ComputerName "$client_name"
+}
+#==========#
+# Query Active Directory if $NEWHOST exists
+#==========#
+client_name1="$(/usr/bin/dscl "/Active Directory/DOMAIN/domain.com" read /Computers/$NEWHOST$ | awk '/name/ {print $2}')"
+client_name2="$(/usr/bin/dscl "/Active Directory/DOMAIN/domain.com" read /Computers/$NEWHOST-02$ | awk '/name/ {print $2}')"
+client_name3="$(/usr/bin/dscl "/Active Directory/DOMAIN/domain.com" read /Computers/$NEWHOST-03$ | awk '/name/ {print $2}')"
+client_name4="$(/usr/bin/dscl "/Active Directory/DOMAIN/domain.com" read /Computers/$NEWHOST-04$ | awk '/name/ {print $2}')"
+if [ -z  $client_name1 ]; then
+		echo "Querying for first available hostname"
+		echo "Hostname will be set as '$NEWHOST'"
+		killall -HUP mDNSResponder
+		client_name=$NEWHOST
+		set_host
+else #Query AD if $NEWHOST-02 exists
+	if [ -z $client_name2 ]; then
+		echo "Querying for next available hostname"
+		echo "Hostname will be set as '$NEWHOST-02'"
+		killall -HUP mDNSResponder
+		client_name=$NEWHOST-02
+		set_host
+	else
+		if [ -z $client_name3 ]; then
+			echo "Querying for next available hostname"
+			echo "Hostname will be set as '$NEWHOST-03'"
+			killall -HUP mDNSResponder
+			client_name=$NEWHOST-03
+			set_host
+	else
+		if [ -z $client_name4 ]; then
+			echo "Querying for next available hostname"
+			echo "Hostname will be set as '$NEWHOST-04'"
+			killall -HUP mDNSResponder
+			client_name=$NEWHOST-04
+			set_host
+		fi
+	  fi
+	fi
+fi
+
+#==========#
+# ADBIND Section
+#==========#
+# Standard parameters (all fields required)
+domain="domain.com"				# Fully qualified DNS name of Active Directory Domain
+ou="OU=Mac,OU=Workstations,DC=DOMAIN,DC=com"
+
+# Advanced options
+mobile="enable"						# 'enable' or 'disable' mobile account support for offline logon
+mobileconfirm="disable"				# 'enable' or 'disable' option for user to decline mobile account creation
+localhome="enable"					# 'enable' or 'disable' force home directory to local drive
+useuncpath="disable"				# 'enable' or 'disable' use AD SMBHome attribute to determine the home dir
+protocol="smb"						# 'afp' or 'smb' change how home is mounted from server
+user_shell="/bin/bash"				# /bin/bash, /bin/ksh, etc... or "none"
+preferred="-nopreferred"			# Use the specified server for all Directory lookups and authentication
+passinterval="30"
+admingroups="OSX_Local_Admins"	    # These comma-separated AD groups may administer the machine
+alldomains="enable"					# 'enable' or 'disable' authentication from any domain in the forest
+ad_admin="svc_macosx_adbind" 		# AD service account
+ad_pass="swaqEB6Utuye"							# AD service account password
+ad_server="domain.com"				# AD domain
+gid="gidNumber"						# AD group id attribute number
+uid="uidNumber"						# AD user id attribute number
+ADmultidomain="1"					# Same value used in ADBind alldomains option
+
+AD_Bind()
+{
+
+isBoundtoAD=$(dscl localhost -read "/Active Directory/DOMAIN" DomainName 2>/dev/null | awk -F ':\ ' '{print $2}')
+
+#if ! [ "$isBoundtoAD" == "$domain" ]; then
+	#killall opendirectoryd
+	#sleep 10
+	# Unbind computer first
+	#dsconfigad -username $ad_admin -password "$ad_pass" -remove -force 2>&1
+	#dsconfigad -add $domain -username $ad_admin  -password "$ad_pass" -computer $client_name -ou "$ou" -force 2>&1
+#fi
+killall opendirectoryd
+/usr/bin/odutil reset cache
+sleep 10
+dsconfigad -username $ad_admin -password "$ad_pass" -remove -force 2>&1
+dsconfigad -add $domain -username $ad_admin  -password "$ad_pass" -computer $client_name -ou "$ou" -force 2>&1
+dsconfigad -mobile $mobile 2>&1
+dsconfigad -mobileconfirm $mobileconfirm 2>&1
+dsconfigad -preferred $preferred 2>&1
+dsconfigad -localhome $localhome 2>&1
+dsconfigad -shell $user_shell 2>&1
+dsconfigad -useuncpath $useuncpath 2>&1
+dsconfigad -passinterval $passinterval 2>&1
+dsconfigad -protocol $protocol 2>&1
+dsconfigad -packetsign allow 2>&1
+dsconfigad -packetencrypt allow 2>&1
+dsconfigad -groups "$admingroups" 2>&1
+dsconfigad -authority enable 2>&1
+dsconfigad -alldomains $alldomains 2>&1
+dsconfigad -uid $uid -gid $gid -ggid $gid 2>&1
+
+AD_SEARCH_PATH="$(dscl /Search -read / CSPSearchPath | awk '/Active Directory/ {print $0}')"
+  if [ -n "${AD_SEARCH_PATH}" ]
+  then
+    echo "Deleting '${AD_SEARCH_PATH}' from authentication search path..." 2>&1
+    dscl localhost -delete /Search CSPSearchPath "${AD_SEARCH_PATH}" 2>/dev/null
+    echo "Deleting '${AD_SEARCH_PATH}' from contacts search path..." 2>&1
+    dscl localhost -delete /Contact CSPSearchPath "${AD_SEARCH_PATH}" 2>/dev/null
+  fi
+dscl localhost -create /Search SearchPolicy CSPSearchPath 2>&1
+dscl localhost -create /Contact SearchPolicy CSPSearchPath 2>&1
+AD_DOMAIN_NODE="$(dscl localhost -list "/Active Directory" | head -n 1)"
+AD_SEARCH_PATH="/Active Directory/${AD_DOMAIN_NODE}/All Domains"
+echo "Adding '${AD_SEARCH_PATH}' to authentication search path..." 2>&1
+dscl localhost -append /Search CSPSearchPath "${AD_SEARCH_PATH}"
+echo "Adding '${AD_SEARCH_PATH}' to contacts search path..." 2>&1
+dscl localhost -append /Contact CSPSearchPath "${AD_SEARCH_PATH}"
+
+}
+#==========#
+# End ADBIND Section
+#==========#
+
+AD_Bind
+
+exit 0

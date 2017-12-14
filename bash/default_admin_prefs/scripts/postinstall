@@ -1,0 +1,45 @@
+#!/bin/sh
+# Scott Anderson | DOMAIN
+# Macadmin defaults v1.x.x
+# Now including Desktop Background
+
+source="/private/tmp/DefaultAdminPrefs"
+#DEST="/Library/Desktop Pictures"
+MAHOME="/var/home/macadmin"
+madmin_SUPP="/var/home/macadmin/Library/Application Support"
+madmin_DOCK="/var/home/macadmin/Library/Application Support/Dock"
+madmin_PREF="/var/home/macadmin/Library/Preferences"
+
+# Create necessary dir
+/bin/mkdir -p "${madmin_PREF}" &>/dev/null
+
+# Copy, chmod and chown assets
+#/bin/cp ${source}/com.apple.dock.plist "${madmin_PREF}"/ &>/dev/null
+#/bin/cp ${source}/com.apple.Terminal.plist "${madmin_PREF}"/ &>/dev/null
+#/bin/cp ${source}/com.apple.finder.plist "${madmin_PREF}"/ &>/dev/null
+/usr/sbin/chown -R macadmin:admin "${MAHOME}"
+/bin/chmod -R 600 "${madmin_PREF}"/com.apple.dock.plist
+/bin/chmod -R 600 "${madmin_PREF}"/com.apple.finder.plist
+/bin/chmod -R 600 "${madmin_PREF}"/com.apple.Terminal.plist
+
+# Set Default Background
+#/usr/sbin/chown root:wheel $source/Wallpaper.jpeg
+#/bin/chmod 644 ${source}/Wallpaper.jpeg
+#/bin/cp ${source}/Wallpaper.jpg "$DEST"/
+
+if [ ! -d "${madmin_DOCK}" ]; then
+  /bin/mkdir -p "${madmin_DOCK}"
+  /usr/sbin/chown macadmin:admin "${madmin_SUPP}"
+  /usr/sbin/chown macadmin:admin "${madmin_DOCK}"
+elif [ -d "${madmin_DOCK}" ]; then
+  /bin/rm "${madmin_DOCK}"/desktoppicture.db
+  /bin/cp ${source}/desktoppicture.db "${madmin_DOCK}"
+  /usr/sbin/chown macadmin:admin "${madmin_DOCK}"/desktoppicture.db
+fi
+
+/usr/bin/killall -HUP Dock &> /dev/null
+/usr/bin/osascript -e 'delay 1.0' -e 'tell application "Dock" to activate'
+
+/bin/rm -rf ${source} &>/dev/null
+
+exit 0

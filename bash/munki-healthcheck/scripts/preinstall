@@ -1,0 +1,25 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Munki Health Check Munki 3
+# SYNOPSIS: This will run as a local LaunchDaemon
+# exit status not 0 means no installation necessary
+#==========#
+# HISTORY:
+# Version 1.2
+# Created by Scott Anderson on 8/22/2016
+# Revision Date 11/08/2017
+#==========#
+# VARIABLES
+#==========#
+#NA
+# Unload launchdaemon
+munkihc_ld="/Library/LaunchDaemons/com.domain.munki-healthcheck.plist"
+
+if [[ -e "$munkihc_ld" ]]; then
+	/usr/bin/chflags noschg "$munkihc_ld"
+	/bin/launchctl stop "$munkihc_ld" 2>/dev/null
+	/bin/launchctl unload "$munkihc_ld" 2>/dev/null
+fi
+
+exit 0

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+SOURCE="/private/tmp/tree"
+/bin/mkdir -p /usr/local/bin &>/dev/null
+/bin/cp $SOURCE/tree /usr/local/bin &>/dev/null
+/bin/rm -rf $SOURCE &>/dev/null

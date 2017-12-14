@@ -1,0 +1,51 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Munki Additions
+# SYNOPSIS: Writes initial munki configuration to $pub_config
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 9/6/2016
+# Revision Date
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+TARGET_VOL="$3"
+munki_dir="/usr/local/munki"
+pub_config="${TARGET_VOL}/Library/Preferences/ManagedInstalls.plist"
+sec_config="${TARGET_VOL}/private/var/root/Library/Preferences/ManagedInstalls.plist"
+#==========#
+# COMMANDS
+#==========#
+defaults delete "${pub_config%.*}"
+defaults write "${sec_config%.*}" ClientIdentifier -string "Client"
+defaults write "${sec_config%.*}" DaysBetweenNotifications -int 1
+defaults write "${sec_config%.*}" LogFile -string "/Library/Managed Installs/Logs/ManagedSoftwareUpdate.log"
+defaults write "${sec_config%.*}" LoggingLevel -int 1
+defaults write "${sec_config%.*}" PackageVerificationMode -string "hash"
+defaults write "${sec_config%.*}" SoftwareRepoURL -string "http://repo.domain.com/munki_repo"
+defaults write "${sec_config%.*}" SuppressAutoInstall -bool FALSE
+defaults write "${sec_config%.*}" SuppressStopButtonOnInstall -bool TRUE
+defaults write "${sec_config%.*}" SuppressUserNotification -bool FALSE
+defaults write "${sec_config%.*}" UseClientCertificate -bool FALSE
+defaults write "${pub_config%.*}" InstallAppleSoftwareUpdates -bool TRUE
+defaults write "${pub_config%.*}" ManagedInstallDir -string "/Library/Managed Installs"
+defaults write "${pub_config%.*}" ShowRemovalDetail -bool TRUE
+defaults write "${pub_config%.*}" AppleSoftwareUpdatesOnly -bool FALSE
+defaults write "${pub_config%.*}" HelpURL -string "http://helpdesk.domain.com"
+
+if [ ! -d "${TARGET_VOL}/${munki_dir}" ]; then
+	mkdir -p "${TARGET_VOL}/${munki_dir}"
+	chown root:wheel "${TARGET_VOL}/${munki_dir}"
+fi
+
+# Remove old conditions
+rm -rf "${TARGET_VOL}/${munki_dir}/conditions" &>/dev/null
+
+exit 0

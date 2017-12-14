@@ -1,0 +1,51 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: OutlookSafeSenders
+# SYNOPSIS: Add mailchimp domains to Outlook 2016 safe senders list.
+#
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 5/4/16
+# Revision Date NA
+#==========#
+# ADDITIONAL INFO:
+# Thanks to Daniel Beck's post on superuser!
+# http://superuser.com/questions/291546/global-keyboard-shortcut-to-open-a-tab-in-chrome-on-mac-os-x
+#
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki:/usr/libexec
+export PATH
+#==========#
+# VARIABLES
+#==========#
+installerPackagePath="${1}"  # Full path to the installation package the Installer application is processing.
+destinationPath="${2}"       # Full path to the installation destination. Example: /Applications
+targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
+rootPath="${4}"              # The root directory for the system. Example: /
+PlistBuddy="/usr/libexec/PlistBuddy" # Not necessary with PATH
+User="$(ls -la /dev/console | awk '{print $3}')"
+OutlookDef="/Users/$User/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist"
+JunkMail="$(defaults read $OutlookDef JunkMailSafeSenderList)"
+MailChimpDom="MailChimp_Domains.xml"
+#==========#
+# COMMANDS
+#==========#
+plutil -convert xml1 $OutlookDef
+if [ -z $JunkMail ]; then
+	echo "JunkMail Safe Sender List not present. Adding company specified list."
+	$PlistBuddy -c "Merge '$MailChimpDom' :JunkMailSafeSenderList" $OutlookDef
+else # This will have to work until an export and merge can be figured out
+	echo "JunkMail Safe Sender List present. Exporting plist and adding company specified list."
+	mkdir -p /Users/$User/Documents/Outlook/SafeSenders
+	$JunkMail > /Users/$User/Documents/SafeSenders/PersonalSafeSenders.plist
+	plutil -convert xml1 /Users/$User/Documents/SafeSenders/PersonalSafeSenders.plist
+	$PlistBuddy -c "Delete :JunkMailSafeSenderList:SafeSenderList" $OutlookDef
+	$PlistBuddy -c "Delete :JunkMailSafeSenderList:JunkMailPreferenceVersion" $OutlookDef
+	$PlistBuddy -c "Merge '$MailChimpDom' :JunkMailSafeSenderList" $OutlookDef
+fi
+
+exit 0

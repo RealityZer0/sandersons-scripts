@@ -1,0 +1,147 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS:
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# VARIABLES
+#==========#
+RUNTYPE="$1"
+MAC="$(ifconfig en0 | awk '$1=="ether" {print $2}')"
+NAME="$(/usr/sbin/scutil --get ComputerName)"
+BASEURL="http://munki.domain.com"
+SUBMITURL="${BASEURL}/update"
+LOOKUPURL="${BASEURL}/lookup/ip"
+# Enter a list of networks where Munki runs are allowed.
+# To skip the network check, set ALLOWED_PREFIXES to an empty list:
+#All domain Networks per IPAM
+#ALLOWED_PREFIXES=( 10.45 10.49 10.64 10.65 10.67 10.128 10.129 10.130 10.131 10.132 )
+ALLOWED_PREFIXES=( )
+# Enter a list of networks where Munki runs are not allowed.
+DISALLOWED_PREFIXES=( )
+external_ip="$(curl --max-time 5 --silent --fail "${LOOKUPURL}")"
+CURRENT_CONSOLE_USER="$(ls -la /dev/console 2>/dev/null | awk '{print $3}')"
+USERNAME="$CURRENT_CONSOLE_USER"
+LOCATION="$(dscl "/Active Directory/DOMAIN/domain.com" -read /Users/"$USERNAME" extensionAttribute1 | awk '{print $2}')"
+CURRENT_CONSOLE_USER_HOME="$(dscl . read /Users/"$CURRENT_CONSOLE_USER" home 2>/dev/null | awk '{print $2}')"
+MANAGEDINSTALLDIR="/Library/Managed Installs"
+
+if [ ! -e "/Library/Managed Installs/Logs" ]; then
+    mkdir "/Library/Managed Installs/Logs"
+fi
+
+
+network_profiler()
+{
+	prefix_ok="no"
+	for prefix in ${DISALLOWED_PREFIXES[@]}; do
+		prefix_len=$( echo `echo "$prefix" |tr . '\012' | wc -l` )
+
+		my_ip_prefix=`echo $external_ip | cut -d. -f1-$prefix_len`
+
+		if [ "$my_ip_prefix" != "$prefix" ] && [ ! -z "$my_ip_prefix" ]; then
+			prefix_ok="yes"
+		else
+			rm -rf /tmp/munki-network-ok
+			return 1
+			break
+		fi
+	done
+
+	if [ "$prefix_ok" == "yes" ]; then
+		touch /tmp/munki-network-ok
+		return 0
+	else
+		rm -rf /tmp/munki-network-ok
+		return 1
+	fi
+}
+
+link_home_dir()
+{
+	if [ ! -z "$CURRENT_CONSOLE_USER_HOME" ]; then
+		/bin/rm /etc/user_dir &>/dev/null
+		/bin/ln -s "$CURRENT_CONSOLE_USER_HOME" /etc/user_dir
+	fi
+}
+
+# network_profiler
+
+#if [ "$RUNTYPE" == "custom" -o "$RUNTYPE" == "auto" ]; then
+#    if [ ! -z "$ALLOWED_PREFIXES" ]; then
+#        echo "Checking network"
+#
+#        external_ip=`curl --max-time 5 --silent --fail "${LOOKUPURL}"`
+#        if [ $? -ne 0 ]; then
+#            echo "External IP lookup failed, aborting munki run"
+#            exit 1
+#        fi
+#
+#        prefix_ok="no"
+#       for prefix in ${ALLOWED_PREFIXES[@]}; do
+#            echo -n "Checking $prefix for IP address $external_ip"
+#           prefix_len=$( echo `echo "$prefix" | tr . '\012' | wc -l` )
+#            for (( i=$prefix_len ; i<4 ; i++ )); do
+#               echo -n '.x'
+#           done
+#           my_ip_prefix=`echo $external_ip | cut -d. -f1-$prefix_len`
+#           if [ "$my_ip_prefix" == "$prefix" ]; then
+#                echo ": Inside"
+#                prefix_ok="yes"
+#                break
+#            else
+#                echo ": Outside"
+#            fi
+#        done
+#        if [ "$prefix_ok" == "yes" ]; then
+#            echo "Network check OK, proceeding with munki run"
+#        else
+#            echo "Network check failed, aborting munki run"
+#            exit 1
+#        fi
+#    fi
+#fi
+
+# Verify Munki is on DOMAIN network. Exit if not as report to server will fail.
+#Consider creating a method for storing the file for a future push.
+domain="domain.com"
+if ping -c 2 -o $domain &>/dev/null; then
+	result="$domain network connection successful."
+	echo "$result"
+	curl --max-time 5 --silent \
+	    -d runtype="$RUNTYPE" \
+	    -d mac="$MAC" \
+	    -d name="$NAME" \
+	    -d username="$USERNAME" \
+	    -d location="$LOCATION" \
+	    "$SUBMITURL/preflight"
+
+	printf "%s - %s - %s\n" "$NAME" "$MAC" "$external_ip"
+else
+    result="Not on DOMAINorate network."
+	echo "$result"
+	# Not posting preflight info when off network
+	 result="$HOSTNAME not connected to $domain. Current IP: $IPADD" >> "/Library/Managed Installs/Logs/Postflight_failed.log" &>/dev/null
+fi
+
+
+#### Ensure that 'InstallInfo.plist' is NOT a directory
+if [ -d "${MANAGEDINSTALLDIR}/InstallInfo.plist" ]; then
+	rm -rf "${MANAGEDINSTALLDIR}/InstallInfo.plist"
+fi
+
+#### Create symlink to current console user's home directory
+link_home_dir
+
+#### Retrieve base manifest from repo
+/usr/local/munki/getmanifest 2>/dev/null
+
+exit 0

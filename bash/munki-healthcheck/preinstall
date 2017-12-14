@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Unload launchdaemon
+munkihc_ld="/Library/LaunchDaemons/com.domain.munki-healthcheck.plist"
+
+if [[ -e "$munkihc_ld" ]]; then
+	/usr/bin/chflags noschg "$munkihc_ld"
+	/bin/launchctl stop "$munkihc_ld" 2>/dev/null
+	/bin/launchctl unload "$munkihc_ld" 2>/dev/null
+	/bin/rm -rf "$munkihc_ld"
+fi
+
+exit 0

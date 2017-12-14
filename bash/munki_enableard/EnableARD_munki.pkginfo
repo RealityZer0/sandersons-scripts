@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>_metadata</key>
+	<dict>
+		<key>created_by</key>
+		<string>sa8678</string>
+		<key>creation_date</key>
+		<date>2016-03-30T01:32:11Z</date>
+		<key>munki_version</key>
+		<string>2.5.1.2627</string>
+		<key>os_version</key>
+		<string>10.11.3</string>
+	</dict>
+	<key>autoremove</key>
+	<false/>
+	<key>catalogs</key>
+	<array>
+		<string>testing</string>
+	</array>
+	<key>display_name</key>
+	<string>Enable Apple Remote Desktop</string>
+	<key>installcheck_script</key>
+	<string>#!/bin/sh
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+ardrunning=$(ps ax | grep -c -i "[Aa]rdagent")
+# All Users access should be off
+all_users=$(defaults read /Library/Preferences/com.apple.RemoteManagement ARD_AllLocalUsers 2&gt;/dev/null)
+
+if [[ $ardrunning -eq 0 ]]; then
+	echo "ARD not running"
+	exit 0
+fi
+
+if [[ $all_users -eq 1 ]]; then
+	echo "All Users Access Enabled"
+	exit 1
+fi
+
+echo "Everything looks great!"
+
+exit 1</string>
+	<key>installer_type</key>
+	<string>nopkg</string>
+	<key>minimum_os_version</key>
+	<string>10.4.0</string>
+	<key>name</key>
+	<string>EnableARD_munki</string>
+	<key>postinstall_script</key>
+	<string>#!/bin/sh
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+
+#enable ARD access
+KICKSTART="/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart"
+$KICKSTART -uninstall -settings -prefs
+$KICKSTART -restart -agent -console
+-configure -access -on -users macadmin -privs -all
+$KICKSTART -configure -clientopts -setvnclegacy -vnclegacy no -setdirlogins -dirlogins yes -setreqperm -reqperm yes -setmenuextra -menuextra no -allowAccessFor -specifiedUsers
+$KICKSTART -restart -agent
+$KICKSTART -activate
+
+exit 0</string>
+	<key>unattended_install</key>
+	<true/>
+	<key>version</key>
+	<string>1.0</string>
+</dict>
+</plist>
+

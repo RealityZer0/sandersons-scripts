@@ -1,0 +1,20 @@
+#!/bin/sh
+# Edited by Scott Anderson 10/22/15
+# Fetch some facts about the client's AD connection
+# Examples include: Domain and DC
+
+plist_loc="/Library/Managed Installs/ConditionalItems"
+
+
+### Get everything else...
+AD_DOMAIN="$(/usr/bin/host domain.com | awk 'FNR == 1 {print $1}')"
+AD_DC="$(/usr/libexec/PlistBuddy -c "print 'last used servers':'/Active Directory/DOMAIN':host" /Library/Preferences/OpenDirectory/DynamicData/Active\ Directory/DOMAIN.plist)"
+
+### Write out to ConditionalItems.plist
+defaults write "$plist_loc" "AD_DOMAIN" "${AD_DOMAIN}" 2>/dev/null
+defaults write "$plist_loc" "AD_DC" "${AD_DC}" 2>/dev/null
+
+### Ensure plist is not in binary format
+plutil -convert xml1 "${plist_loc}".plist &>/dev/null
+
+exit 0

@@ -1,0 +1,12 @@
+#!/bin/bash
+ExcelVer="$(defaults read "/Applications/Microsoft Excel.app/Contents/Info.plist" CFBundleShortVersionString)"
+PkgRcpt="/var/db/receipts/com.microsoft.package.Microsoft_Excel.app.plist"
+
+#Compare Excel Version needed to install
+if [[ -e "$PkgRcpt" ]] && [[ "$ExcelVer" < "15.18" ]]; then 
+	echo "Excel update is required"
+    exit 0
+else 
+    echo "Excel update is not required"
+	exit 1
+fi

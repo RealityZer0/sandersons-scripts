@@ -13,7 +13,7 @@ DEST="/private/tmp/enalf"
 ASSET1="com.domain.enable-alf.plist"
 ASSET2="enable-alf.sh"
 
-pack-yp-enable-firewall:
+pack-domain-enable-firewall:
 	@sudo mkdir -p ${WORK_D}${DEST}
 	@sudo ${CP} ${ASSET1} ${WORK_D}${DEST}/
 	@sudo ${CP} ${ASSET2} ${WORK_D}${DEST}/

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+MunkiVarManifest="/var/root/Library/munki_manifests"
+MunkiVarPrefs="/var/root/Library/Preferences/ManagedInstalls.plist"
+MunkiPrefs="/Library/Preferences/ManagedInstalls.plist"
+MunkiLoc="/Library/Managed Installs"
+MunkiInstalls="/Library/Managed Installs/InstallInfo.plist"
+MunkiCatalogs="/Library/Managed Installs/catalogs"
+MunkiLogs="/Library/Managed Installs/Logs"
+MunkiManifests="/Library/Managed Installs/manifests"
+
+
+if [[ -e "$MunkiVarManifest" ]]; then
+	sudo rm -f "$MunkiVarManifest"
+	echo "Deleting $MunkiVarManifest"
+else
+	echo "Skipping"	
+fi
+
+if [[ -e "$MunkiVarPrefs" ]]; then
+	sudo rm -f "$MunkiVarPrefs"
+	echo "Deleting $MunkiVarPrefs"
+else
+	echo "Skipping"
+fi
+
+if [[ -e "$MunkiPrefs" ]]; then
+	sudo rm -f "$MunkiPrefs"
+	echo "Deleting $MunkiPrefs"
+else
+	echo "Skipping"
+fi
+
+rm -f "$MunkiInstalls"
+rm -f "$MunkLoc"/Cache/*
+rm -f "$MunkLoc"/catalogs/*
+rm -f "$MunkLoc"/manifests/*
+rm -f "$MunkLoc"/Logs/*
+
+exit 0

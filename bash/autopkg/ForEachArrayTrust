@@ -1,0 +1,82 @@
+#!/bin/bash
+
+overDir="/Users/admin/Library/AutoPkg/Overrides"
+
+overrides=(
+Adium.munki.recipe
+AdobeFlashPlayerExtractPackage.munki.recipe
+AdobeReaderDC.munki.recipe
+AdobeShockwavePlayer.munki.recipe
+Atom.munki.recipe
+AutoDMG.munki.recipe
+AutoPkgr.munki.recipe
+BlockBlock.munki.recipe
+CCleaner.munki.recipe
+Camtasia.munki.recipe
+Colloquy.munki.recipe
+CreateUserPkg.munki.recipe
+Cyberduck.munki.recipe
+DockerToolbox.munki.recipe
+Dropbox.munki.recipe
+Evernote.munki.recipe
+FileZilla.munki.recipe
+Firefox.munki.recipe
+Git.munki.recipe
+Github.munki.recipe
+Go2Shell.install.recipe
+GoogleChrome.munki.recipe
+GoogleDrive.munki.recipe
+GrandPerspective.munki.recipe
+HipChat.munki.recipe
+KnockKnock.munki.recipe
+LaunchControl.munki.recipe
+MRD_AppStore.munki.recipe
+MSExcel2016.munki.recipe
+MSLync.munki.recipe
+MSOneNote2016.munki.recipe
+MSOutlook2016.munki.recipe
+MSPowerPoint2016.munki.recipe
+MSWord2016.munki.recipe
+MacVim.munki.recipe
+MicrosoftRemoteDesktop.munki.recipe
+MunkiAdmin.munki.recipe
+OmniFocus.pkg.recipe
+OmniFocus2.pkg.recipe
+OmniGraffle6.munki.recipe
+OmniGrafflePro.munki.recipe
+OmniOutlinerPro.munki.recipe
+OmniPlan.munki.recipe
+OracleJava8.munki.recipe
+Pacifist.munki.recipe
+RansomWhere.munki.recipe
+Silverlight.munki.recipe
+Slack.munki.recipe
+SourceTree.munki.recipe
+Spectacle.munki.recipe
+SublimeText3.munki.recipe
+Synergy.munki.recipe
+TaskExplorer.munki.recipe
+TechSmithSnagit.munki.recipe
+TextMate2.munki.recipe
+TextWrangler.munki.recipe
+TheUnarchiver.munki.recipe
+VMwareFusion.pkg.munki.recipe
+VMwareTools.munki.recipe
+VirtualBox.munki.recipe
+VirtualBoxExtPack.munki.recipe
+Wireshark.munki.recipe
+iTerm2.munki copy.recipe
+sqlitebrowser.munki.recipe
+)
+
+trustOver()
+{
+	for f in ${overrides[@]}; do
+		if [[ -e ${overDir}/$f ]]; then
+		 	echo "Removing ${overDir}/$f"
+		 	echo "autopkg update-trust-info ${overDir}/$f"
+		fi
+	done
+}
+
+trustover

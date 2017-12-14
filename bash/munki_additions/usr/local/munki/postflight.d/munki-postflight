@@ -1,0 +1,99 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS:
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# VARIABLES
+#==========#
+BASEURL="http://munki.domain.com"
+REPORTSUBMITURL="$BASEURL/update"
+INVENTORYHASHURL="$BASEURL/inventory/hash"
+INVENTORYSUBMITURL="$BASEURL/inventory/submit"
+
+RUNTYPE="$1"
+MAC="$(ifconfig en0 | awk '$1=="ether" {print $2}')"
+IPADD="$(ifconfig en0 | awk '/inet [0-9]/ {print $2}')"
+NAME="$(/usr/sbin/scutil --get ComputerName)"
+USERNAME="$(ls -l /dev/console | awk '{print $3}')"
+LOCATION="$(dscl '/Active Directory/DOMAIN/All Domains' -read /Users/$USERNAME extensionAttribute1 | awk '{print $2}')"
+REPORTPATH="/Library/Managed Installs/ManagedInstallReport.plist"
+INVENTORYPATH="/Library/Managed Installs/ApplicationInventory.plist"
+
+PLISTBUDDY="/usr/libexec/PlistBuddy"
+
+# Verify Munki is on CORP network. Exit if not as report to server will fail.
+domain="domain.com"
+if ping -c 2 -o $domain &>/dev/null; then
+	result="$domain network connection successful." &>/dev/null
+	echo "$result"
+else
+    result="$HOSTNAME not connected to $domain. Current IP: $IPADD" >> "/Library/Managed Installs/Logs/Postflight_failed.log" &>/dev/null
+	echo "$result" &>/dev/null
+exit 0
+fi
+
+# Copy the report to a temporary file.
+TMPPLIST=/tmp/`head -c10 /dev/urandom | md5`.plist
+cp "$REPORTPATH" "$TMPPLIST"
+
+# Generate a system_profiler report.
+PROFILEPLIST=/tmp/`head -c10 /dev/urandom | md5`.plist
+/usr/sbin/system_profiler -xml SPNetworkDataType SPHardwareDataType > "$PROFILEPLIST"
+
+# Merge system profiler report with munki report.
+$PLISTBUDDY -c "Add :MachineInfo:SystemProfile array" "$TMPPLIST"
+$PLISTBUDDY -c "Merge $PROFILEPLIST :MachineInfo:SystemProfile" "$TMPPLIST"
+
+# Compress and encode report.
+REPORTTMP="$(mktemp -t postflight)"
+echo -n "base64bz2report=" > "$REPORTTMP"
+bzip2 --best < "$TMPPLIST" | openssl base64 >> "$REPORTTMP"
+
+
+# Submit Munki report to server.
+curl --max-time 30 --silent \
+    -d runtype="$RUNTYPE" \
+    -d mac="$MAC" \
+    -d name="$NAME" \
+    -d "@$REPORTTMP" \
+    -d username="$USERNAME" \
+    -d location="$LOCATION" \
+    "$REPORTSUBMITURL/postflight"
+
+
+if [ -e "$INVENTORYPATH" ] ; then
+    INVENTORY_CHECKSUM="$(cat /Library/Managed\ Installs/ApplicationInventory.plist | openssl dgst -sha256)"
+    STORED_CHECKSUM="$(curl --max-time 30 --silent "$INVENTORYHASHURL/$MAC")"
+    if [ "$INVENTORY_CHECKSUM" != "$STORED_CHECKSUM" ]; then
+        # inventory changed, sumbit to server
+        # Compress and encode inventory.
+        INVENTORYTMP="$(mktemp -t inventory)"
+        echo -n "base64bz2inventory=" > "$INVENTORYTMP"
+        bzip2 --best < "$INVENTORYPATH" | openssl base64 >> "$INVENTORYTMP"
+        # Submit inventory to server.
+        curl --max-time 30 --silent \
+            -d runtype="$RUNTYPE" \
+            -d mac="$MAC" \
+            -d hostname="$NAME" \
+            -d "@$INVENTORYTMP" \
+            -d username="$USERNAME" \
+            -d location="$LOCATION" \
+            "$INVENTORYSUBMITURL"
+        # clean up
+        rm -f "$INVENTORYTMP"
+    fi
+fi
+
+# Clean up and exit
+rm -f "$REPORTTMP" "$TMPPLIST" "$PROFILEPLIST"
+rm -f /tmp/munki-network-ok
+exit 0

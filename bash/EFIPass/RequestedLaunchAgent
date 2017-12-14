@@ -12,7 +12,7 @@ if [ -f /Library/LaunchDaemons/efic.plist ]; then
 fi
 
 # Write out a LaunchDaemon
-/usr/bin/defaults write /Library/LaunchDaemons/efic.plist Label yp.efic
+/usr/bin/defaults write /Library/LaunchDaemons/efic.plist Label domain.efic
 /usr/bin/defaults write /Library/LaunchDaemons/efic.plist ProgramArguments -array
 /usr/bin/defaults write /Library/LaunchDaemons/efic.plist RunAtLoad -bool YES
 /usr/bin/defaults write /Library/LaunchDaemons/efic.plist KeepAlive -bool YES

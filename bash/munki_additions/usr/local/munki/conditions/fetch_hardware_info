@@ -1,0 +1,29 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS: 
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian 
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+MANAGEDINSTALLDIR="$(/usr/bin/defaults read /Library/Preferences/ManagedInstalls ManagedInstallDir)"
+PLIST_LOC="${MANAGEDINSTALLDIR}/ConditionalItems"
+
+/usr/sbin/sysctl hw | awk -F ' = |: ' '{system("defaults write '"'${PLIST_LOC}'"' " $1 " " "\""$2"\"")}'
+/usr/bin/plutil -convert xml1 "${PLIST_LOC}.plist"
+
+exit 0
+

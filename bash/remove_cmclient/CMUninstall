@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# Microsoft System Center Configuration Manager Mac OS X Client 
+# Uninstall Script (ccmuninstall)
+# Copyright Microsoft Corporation
+#
+# Version: 1.0
+#
+
+RemoveLogsTMPFiles="false"
+
+# Stop CCM Deamons
+StopCCMDeamons ()
+{
+    echo "Stopping CCM Daemon" 1>&2
+    sudo launchctl unload "/Library/LaunchDaemons/com.microsoft.systemsmanagement.ccm.plist" 2>/dev/null
+    if [ $? == 0 ]; 
+    then 
+        echo "Unloaded CCM Daemon" 1>&2;
+    else 
+        echo "Failed to unload CCM Daemon, with exit code $?" 1>&2;
+    fi
+    echo "Stopping CCM User Agent"
+    ps aux | grep /Microsoft/CCM/CCMAgent | grep -v grep | awk '{system("sudo launchctl bsexec "$2" sudo -u "$1" launchctl unload -S Aqua /Library/LaunchAgents/com.microsoft.systemsmanagement.ccmagent.plist")}'
+    if [ $? == 0 ]; 
+        then 
+            echo "Unloaded CCM User Agent" 1>&2;
+        else 
+            echo "Failed to unload CCM User Agent, with exit code $?" 1>&2;
+    fi
+}
+
+# Remove Configuration Manager files
+RemoveApplicationFiles()
+{
+    echo "Removing /Library/Application Support/Microsoft/CCM directory" 1>&2
+    rm -rf "/Library/Application Support/Microsoft/CCM"
+    echo "Removing preferences domain com.microsoft.ccmclient" 1>&2
+    defaults delete com.microsoft.ccmclient
+    echo "Removing /Library/LaunchAgents/com.microsoft.systemsmanagement.ccmagent.plist" 1>&2
+    rm -rf "/Library/LaunchAgents/com.microsoft.systemsmanagement.ccmagent.plist"
+    echo "Removing /Library/LaunchDaemons/com.microsoft.systemsmanagement.ccm.plist" 1>&2
+    rm -rf "/Library/LaunchDaemons/com.microsoft.systemsmanagement.ccm.plist"
+    echo "Removing CCM Preference Pane" 1>&2
+    rm -rf "/Library/PreferencePanes/CCMPrefPane.prefPane"
+    echo "Removing CCM Cache folder" 1>&2
+    rm -rf "/Library/Caches/Microsoft/CCM" 1>&2
+    echo "Removing CCM Package Receipts" 1>&2
+    rm -f /private/var/db/receipts/com.microsoft.configurationManager.CCMClientSvc.pkg.bom
+    rm -f /private/var/db/receipts/com.microsoft.configurationManager.CCMClientSvc.pkg
+    rm -f /private/var/db/receipts/com.microsoft.configurationManager.CCMClientSvc.pkg.plist
+    echo "Removing CCM Sockets" 1>&2
+    rm -rf /var/tmp/com.microsoft.CCMClient
+    echo "Removing CCM Saved Application States (Only applicable to Mac OS X Lion (10.7) or newer" 1>&2
+    rm -rf "$HOME/Library/Saved Application State/com.Microsoft.CCMNotifications.savedState" 1>&2
+    if [[ $RemoveLogsTMPFiles = true ]] ; then
+        echo "Removing CrashLogs and Temporary Files" 1>&2
+        rm -f "/tmp/CCMClient.log" 1>&2
+        rm -f $HOME/Library/Logs/DiagnosticReports/System?Preference*.crash
+        rm -f $HOME/Library/Logs/CrashReporter/System?Preference*.crash
+        rm -f $HOME/Library/Logs/CrashReporter/System?Preference*.plist
+        rm -f $HOME/Library/Logs/DiagnosticReports/CCM*.crash
+        rm -f $HOME/Library/Logs/CrashReporter/CCM*.crash
+        rm -f $HOME/Library/Application\ Support/CrashReporter/CCM*.plist
+        rm -f $HOME/Library/Logs/CCMPrefPane*.log
+        rm -f $HOME/Library/Logs/CCMNotifications*.log
+        rm -f $HOME/Library/Logs/CCMEnroller*.log
+        rm -f $HOME/Library/Logs/CCMAgent*.log
+        rm -f /Library/Logs/DiagnosticReports/CCM*.crash 
+        rm -f /Library/Logs/CrashReporter/CCM*.crash
+        rm -f /Library/Application\ Support/CrashReporter/CCM*.plist
+    fi
+}
+
+# Main program
+echo "" 1>&2
+echo "Microsoft System Center Configuration Manager" 1>&2
+echo "Uninstaller for the Configuration Manager Mac OS X client" 1>&2
+echo "Copyright 2013 Microsoft Corporation" 1>&2
+echo 
+        
+if [[ "$1" = "-c" ]] ; then 
+    RemoveLogsTMPFiles="true"
+    Echo "Crashlogs located in system directories will also be removed"
+else        
+    echo "To remove any client crashlogs in addition to uninstalling use:"
+    echo "$0 -c" 
+fi
+
+
+echo "" 1>&2
+
+if [ "$UID" != 0 ]; then
+    read -p "Are you sure you want to uninstall the Configuration Manager client? [y or n]" answer
+    while true
+        do 
+            case $answer in
+                [yY]* )  
+                    echo ""
+                    echo "This script requires administrative privileges to run. " 1>&2
+                    echo "Please provide admin password to continue running the script:" 1>&2
+                    exec sudo "$0" $1
+                    break;;
+                * ) 
+                    echo "Exiting"
+                    exit;;
+            esac
+        done
+fi
+
+echo ""
+echo "Commencing uninstall..." 1>&2
+StopCCMDeamons
+RemoveApplicationFiles
+
+echo "" 1>&2
+echo "The Microsoft System Center 2012 Configuration Manager client has been uninstalled" 1>&2
+echo "" 1>&2
+

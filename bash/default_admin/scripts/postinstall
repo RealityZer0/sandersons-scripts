@@ -1,0 +1,101 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: DefaultAdmin
+# SYNOPSIS: This script will create the local admin account
+#==========#
+# HISTORY:
+# Version 1.6
+# Created by Scott Anderson on 11/09/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+source="/private/tmp/defaultadmin"
+osvers=$(sw_vers -productVersion | awk -F. '{print $2}')
+sw_vers=$(sw_vers -productVersion)
+sw_build=$(sw_vers -buildVersion)
+adminChk="$(dscl . -read /Users/${madmin_USER} | grep RealName | awk '{print $2}')" &>/dev/null
+
+madmin_USER="admin"
+madmin_PASS="password"
+madmin_UID="300"
+madmin_NAME="${madmin_USER}"
+madmin_HOME="/var/home/${madmin_USER}"
+madmin_PREF="${madmin_HOME}/Library/Preferences"
+madmin_MCX="/Library/Managed Preferences/$madmin_USER"
+madmin_SUPP="${madmin_HOME}/Library/Application Support"
+madmin_DOCK="${madmin_HOME}/Library/Application Support/Dock"
+
+#==========#
+# COMMANDS
+#==========#
+# Check for existing admin account. Delete if exists
+# Safer than sending passwords to change keychain and password in the clear
+if [[ "${adminChk}" = "${madmin_USER}" ]]; then
+  madminGUID="$(dscl . -read /Users/${madmin_USER} GeneratedUID | awk '{print $2}')"
+  dseditgroup -o edit -d "${madmin_USER}" -t user admin
+  dscl . -delete /Groups/admin GroupMembership "${madmin_USER}"
+  dscl . -delete /Groups/admin GroupMembers "${madminGUID}"
+  dscl . -delete /Users/${madmin_USER}
+  rm -rf /var/home/"${madmin_USER}"
+fi
+
+# Create New Account Test
+sysadminctl -addUser ${madmin_USER} -fullName ${madmin_NAME} -UID=${madmin_UID} \
+-shell bash -home ${madmin_HOME} -admin
+dseditgroup -o edit -a "${madmin_USER}" -t user admin
+dscl . -create /Users/${madmin_USER} IsHidden 1
+dscl . -passwd /Users/"${madmin_USER}" ${madmin_PASS}
+# chown and chmod all created files
+chown -R ${madmin_USER}:admin "$madmin_HOME"
+#Add local account to admin groups
+#dscl . -append /Groups/admin GroupMembership "$madmin_USER"
+
+# Copy, chmod and chown assets
+mkdir -p "${madmin_PREF}"
+cp "${source}/com.apple.dock.plist" "$madmin_PREF/" &>/dev/null
+cp "${source}/com.apple.Terminal.plist" "$madmin_PREF/" &>/dev/null
+cp "${source}/com.apple.finder.plist" "$madmin_PREF/" &>/dev/null
+cp "${source}/com.apple.SetupAssistant.plist" "$madmin_PREF/" &>/dev/null
+chown -R ${madmin_USER}:admin ${madmin_HOME}
+chmod -R 600 "${madmin_PREF}"/com.apple.dock.plist
+chmod -R 600 "${madmin_PREF}"/com.apple.finder.plist
+chmod -R 600 "${madmin_PREF}"/com.apple.Terminal.plist
+chmod -R 700 "${madmin_PREF}"/com.apple.SetupAssistant.plist
+
+# Set Default Background
+if [[ ! -d "${madmin_DOCK}" ]]; then
+  mkdir -p "${madmin_DOCK}"
+  chown -R ${madmin_USER}:admin ${madmin_HOME}
+  cp "${source}/desktoppicture.db" "${madmin_DOCK}/"
+else
+  rm "${madmin_DOCK}/desktoppicture.db"
+  cp "${source}/desktoppicture.db" "${madmin_DOCK}/"
+  chown ${madmin_USER}:admin "${madmin_DOCK}/desktoppicture.db"
+fi
+killall -HUP -c Dock &> /dev/null
+osascript -e 'delay 1.0' -e 'tell application "Dock" to activate'
+
+touch /var/db/.AppleSetupDone
+
+#touch "${madmin_PREF}/com.apple.SetupAssistant.plist"
+#defaults write "${madmin_PREF}"/com.apple.SetupAssistant DidSeeCloudSetup -bool true
+#defaults write "${madmin_PREF}"/com.apple.SetupAssistant DidSeeSiriSetup -bool true
+#defaults write "${madmin_PREF}"/com.apple.SetupAssistant GestureMovieSeen none
+#defaults write "${madmin_PREF}"/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
+#defaults write "${madmin_PREF}"/com.apple.SetupAssistant LastSeenBuddyBuildVersion "${sw_build}"
+#chown -R ${madmin_USER}:admin ${madmin_HOME}
+#chmod 700 "${madmin_PREF}/com.apple.SetupAssistant.plist"
+
+rm -rf ${source} &>/dev/nul
+
+
+exit 0

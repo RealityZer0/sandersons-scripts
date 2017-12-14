@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>autoremove</key>
+	<false/>
+	<key>catalogs</key>
+	<array>
+		<string>testing</string>
+	</array>
+	<key>category</key>
+	<string>Catgegory_Here</string>
+	<key>description</key>
+	<string>Description_Here</string>
+	<key>developer</key>
+	<string>Developer_Here</string>
+	<key>display_name</key>
+	<string>DisplayName_Here</string>
+	<key>installcheck_script</key>
+	<string></string>
+	<key>installer_type</key>
+	<string>nopkg</string>
+	<key>minimum_os_version</key>
+	<string>10.6.0</string>
+	<key>name</key>
+	<string>Name_Here</string>
+	<key>postinstall_script</key>
+	<string></string>
+	<key>unattended_install</key>
+	<true/>
+	<key>uninstallable</key>
+	<false/>
+	<key>version</key>
+	<string>1.0</string>
+</dict>
+</plist>

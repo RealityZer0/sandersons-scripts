@@ -1,0 +1,37 @@
+#!/bin/sh
+
+DEPLOY_PATH="/Library/Certificates/*"
+LOCAL_CERTS="/tmp/cert_dump.txt"
+systemkeychain="/Library/Keychains/System.keychain"
+PID="$$"
+
+current_user="$(ls -l /dev/console | awk '{print $3}')"
+
+if [[ "$current_user" = "root" ]]; then
+	exit 1
+fi
+
+if ! [ -e /Library/Certificates ]; then
+        exit 0
+fi
+
+/usr/bin/security find-certificate -aZ | awk -F ": " '/^SHA-1/ {SHA=$2};/^keychain/ {keychain=$2};/^.*"subj/ {print SHA "\t" keychain}' >${LOCAL_CERTS}
+
+for c in $DEPLOY_PATH
+do
+    name=${c%.cer}
+    name=${name##*/}
+#certcheck=$(security -q find-certificate -c "$name")
+#echo "certcheck is $certcheck"
+#echo "certcheck length is ${#certcheck}"
+	sha1hash="$(/usr/bin/openssl sha1 "$c" | awk '{print $NF}')"
+    findings=$(/bin/cat "${LOCAL_CERTS}" | /usr/bin/grep -i "System.keychain" | /usr/bin/grep -i "${sha1hash}")
+    findingslength=${#findings}
+    if [[ $findingslength = 0 ]]
+    then
+        rm -rf "${LOCAL_CERTS}"
+        exit 0
+    fi
+done
+rm -rf "${LOCAL_CERTS}"
+exit 1

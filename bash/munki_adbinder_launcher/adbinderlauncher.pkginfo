@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>autoremove</key>
+	<false/>
+	<key>catalogs</key>
+	<array>
+		<string>production</string>
+	</array>
+	<key>category</key>
+	<string>Configuration Scripts</string>
+	<key>description</key>
+	<string>Active Directory Bind Launcher</string>
+	<key>developer</key>
+	<string>YP</string>
+	<key>display_name</key>
+	<string>ADBindLauncher</string>
+	<key>icon_name</key>
+	<string>applescript.png</string>
+	<key>postinstall_script</key>
+	<string>#!/bin/bash
+ADBINDER="/usr/local/corp/adbinder"
+MCXBINDER="/mcx/LOGIN/.MCX_ITEMS/Scripts/adodbinder"
+USERNAME="$(ls -la /dev/console | awk '{print $3}')"
+/usr/bin/sudo -u macadmin /usr/bin/defaults write /var/home/macadmin/Library/Preferences/com.apple.Terminal.plist "Startup Window Settings" "Pro"
+
+/usr/bin/sudo -u macadmin /usr/bin/defaults write com.apple.Terminal.plist "Default Window Settings" "Pro"
+
+if [ -e $ADBINDER ]; then 
+	/usr/bin/open -a "/Applications/Utilities/Terminal.app" $ADBINDER
+else 
+	/usr/bin/open -a "/Applications/Utilities/Terminal.app" $MCXBINDER
+fi
+exit 0
+</string>
+	<key>installer_type</key>
+	<string>nopkg</string>
+	<key>minimum_os_version</key>
+	<string>10.8.5</string>
+	<key>name</key>
+	<string>ADBindLauncher</string>
+	<key>unattended_install</key>
+	<false/>
+	<key>uninstallable</key>
+	<false/>
+	<key>version</key>
+	<string>1.0</string>
+</dict>
+</plist>

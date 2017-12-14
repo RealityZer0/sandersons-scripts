@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>PayloadIdentifier</key>
+		<string>com.apple.mdm.domain.796413f0-039c-0134-50fe-48bcc8f51db0.alacarte</string>
+		<key>PayloadRemovalDisallowed</key>
+		<true/>
+		<key>PayloadScope</key>
+		<string>System</string>
+		<key>PayloadType</key>
+		<string>Configuration</string>
+		<key>PayloadUUID</key>
+		<string>796413f0-039c-0134-50fe-48bcc8f51db0</string>
+		<key>PayloadOrganization</key>
+		<string>DOMAIN</string>
+		<key>PayloadVersion</key>
+		<integer>1</integer>
+		<key>PayloadDisplayName</key>
+		<string>Disable Hot Corners</string>
+		<key>PayloadContent</key>
+		<array>
+			<dict>
+				<key>PayloadDescription</key>
+				<string>Configures Configuration Profile security</string>
+				<key>PayloadDisplayName</key>
+				<string>Profile Security</string>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.796413f0-039c-0134-50fe-48bcc8f51db0.alacarte.ProfileSecurity</string>
+				<key>PayloadType</key>
+				<string>com.apple.profileRemovalPassword</string>
+				<key>PayloadUUID</key>
+				<string>3002d260-039d-0134-5106-48bcc8f51db0</string>
+				<key>RemovalPassword</key>
+				<string>password</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>PayloadType</key>
+				<string>com.apple.ManagedClient.preferences</string>
+				<key>PayloadVersion</key>
+				<integer>1</integer>
+				<key>PayloadIdentifier</key>
+				<string>com.apple.mdm.domain.796413f0-039c-0134-50fe-48bcc8f51db0.alacarte.customsettings.a4cb2330-039c-0134-5100-48bcc8f51db0</string>
+				<key>PayloadUUID</key>
+				<string>a4cb2330-039c-0134-5100-48bcc8f51db0</string>
+				<key>PayloadEnabled</key>
+				<true/>
+				<key>PayloadDisplayName</key>
+				<string>Custom: (com.apple.dock)</string>
+				<key>PayloadContent</key>
+				<dict>
+					<key>com.apple.dock</key>
+					<dict>
+						<key>Forced</key>
+						<array>
+							<dict>
+								<key>mcx_preference_settings</key>
+								<dict>
+									<key>wvous-bl-modifier</key>
+									<integer>1048576</integer>
+									<key>wvous-tr-corner</key>
+									<integer>1</integer>
+									<key>wvous-bl-corner</key>
+									<integer>1</integer>
+									<key>wvous-tl-corner</key>
+									<integer>1</integer>
+									<key>wvous-tl-modifier</key>
+									<integer>1048576</integer>
+									<key>wvous-tr-modifier</key>
+									<integer>1048576</integer>
+									<key>wvous-br-corner</key>
+									<integer>1</integer>
+									<key>wvous-br-modifier</key>
+									<integer>1048576</integer>
+								</dict>
+							</dict>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+		</array>
+	</dict>
+</plist>

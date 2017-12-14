@@ -1,0 +1,12 @@
+#!/bin/bash
+OneNoteVer="$(defaults read "/Applications/Microsoft OneNote.app/Contents/Info.plist" CFBundleShortVersionString)"
+PkgRcpt="/var/db/receipts/com.microsoft.package.Microsoft_OneNote.app.plist"
+
+#Compare OneNote Version needed to install
+if [[ -e "$PkgRcpt" ]] && [[ "$OneNoteVer" < "15.18" ]]; then 
+	echo "OneNote update is required"
+    exit 0
+else 
+    echo "OneNote update is not required"
+	exit 1
+fi

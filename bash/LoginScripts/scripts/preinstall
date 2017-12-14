@@ -1,0 +1,32 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: LoginScripts postinstall
+# SYNOPSIS: Change flags for login scripts
+#==========#
+# HISTORY:
+# Version 1.1
+# Created by Scott Anderson on 11/29/17
+#==========#
+# VARIABLES
+#==========#
+uls="/usr/local/scripts"
+asset1="en-sysprefadm.sh"
+asset2="enablefv.sh"
+ensyspref="${uls}/${asset1}"
+enfv="${uls}/${asset2}"
+
+# If exist change flags, delete and copy new asset
+/bin/mkdir -p "${source}"
+/usr/bin/chflags noschg "${uls}"
+if [[ -e "${ensyspref}" ]];then
+  /usr/bin/chflags noschg "${ensyspref}"
+  /bin/rm -f "${ensyspref}"
+fi
+
+if [[ -e "${enfv}" ]];then
+  /usr/bin/chflags noschg "${enfv}"
+  /bin/rm -f "${enfv}"
+fi
+
+exit 0

@@ -1,0 +1,22 @@
+DWInstall RMATE for use with TextMate
+
+ssh into remote host
+curl -Lo ~/bin/rmate https://raw.githubusercontent.com/textmate/rmate/master/bin/rmate
+chmod a+x ~/bin/rmate
+sudo vi ~/.profile
+ export PATH="$PATH:$HOME/bin"
+ !wq
+ source ~/.profile
+ exit
+
+ Open separate Terminal session on Mac
+ sudo vi ~/.ssh/config
+ Host munkireport
+     Hostname hostname.here.com
+     RemoteForward 52698 localhost:52698
+!wq
+source ~/.ssh/config
+
+ssh munkireport
+
+rmate

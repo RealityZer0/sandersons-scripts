@@ -1,0 +1,6 @@
+# Mac OS X "noise"
+.DS_Store
+._*
+*.pkg
+*.pkginfo
+*.dmg

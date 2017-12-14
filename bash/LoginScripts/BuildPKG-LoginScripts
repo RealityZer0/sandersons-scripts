@@ -1,0 +1,23 @@
+#!/bin/bash
+pkgName="LoginScripts"
+pkgVersion="1.0"
+domain="domain"
+pkgid="com.${domain}.${pkgName}"
+
+#PATH=/usr/bin:/bin:/usr/sbin:/sbin
+#export PATH
+
+#projectdir=$(dirname $0)
+
+pkgbuild --root "payload" --install-location "/usr/local/scripts/" \
+--scripts "scripts" --identifier "${pkgid}" \
+--version "${pkgVersion}" "${pkgName}.pkg"
+
+productbuild --package "${pkgName}.pkg" "${pkgName}"-"${pkgVersion}.pkg"
+rm -f "${pkgName}.pkg"
+#hdiutil create \
+#-volname "${pkgName}"-"${pkgVersion}" \
+#-srcfolder "${pkgName}"-"${pkgVersion}".pkg \
+#-ov \
+#"${projectdir}"/"${pkgName}"-"${pkgVersion}".dmg
+#rm "${pkgName}"-"${pkgVersion}".pkg

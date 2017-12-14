@@ -1,0 +1,7 @@
+makepkginfo --name=EnableARD_munki \
+    --displayname="Enable Apple Remote Desktop" \
+    --pkgvers=1.0 \
+    --nopkg \
+    --installcheck_script=ard_installcheck.sh \
+    --postinstall_script=ard_postinstall.sh \
+    --unattended-install > EnableARD.pkginfo

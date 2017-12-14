@@ -1,0 +1,38 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: OutlookSafeSenders uninstall
+# SYNOPSIS: Remove mailchimp domains to Outlook 2016 safe senders list.
+# 
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 5/4/16
+# Revision Date NA
+#==========#
+# ADDITIONAL INFO:
+# Thanks to Daniel Beck's post on superuser!
+# http://superuser.com/questions/291546/global-keyboard-shortcut-to-open-a-tab-in-chrome-on-mac-os-x
+# 
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki:/usr/libexec
+export PATH
+#==========#
+# VARIABLES
+#==========#
+installerPackagePath="${1}"  # Full path to the installation package the Installer application is processing.
+destinationPath="${2}"       # Full path to the installation destination. Example: /Applications
+targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
+rootPath="${4}"              # The root directory for the system. Example: /
+PlistBuddy="/usr/libexec/PlistBuddy" # Not necessary with PATH
+User="$(ls -la /dev/console | awk '{print $3}')"
+OutlookDef="/Users/$User/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist"
+#==========#
+# COMMANDS
+#==========#
+#Outlook will crash if the profile is removed in the event a user previously had a safe senders list.
+$PlistBuddy -c "Delete :JunkMailSafeSenderList" $OutlookDef
+
+exit 0

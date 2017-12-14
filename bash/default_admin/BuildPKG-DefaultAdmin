@@ -1,0 +1,22 @@
+#!/bin/bash
+pkgName="DefaultAdmin"
+pkgVersion="1.0"
+domain="domain"
+identifier="com.${domain}.${pkgName}"
+
+PATH=/usr/bin:/bin:/usr/sbin:/sbin export PATH
+
+projectfolder=$(dirname $0)
+
+pkgbuild --root "${projectfolder}/payload" \
+--install-location "/" --scripts "${projectfolder}/scripts" --identifier "${identifier}" \
+--ownership recommended --version "${pkgVersion}" "${projectfolder}/${pkgName}-${pkgVersion}.pkg"
+
+#productbuild --package "${pkgName}".pkg "${pkgName}"-"${pkgVersion}".pkg
+#rm "${pkgName}".pkg
+#hdiutil create \
+#-volname "${pkgName}"-"${pkgVersion}" \
+#-srcfolder "${pkgName}"-"${pkgVersion}".pkg \
+#-ov \
+#"${projectfolder}"/"${pkgName}"-"${pkgVersion}".dmg
+#rm "${pkgName}"-"${pkgVersion}".pkg

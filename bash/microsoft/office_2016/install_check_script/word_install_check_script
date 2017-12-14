@@ -1,0 +1,12 @@
+#!/bin/bash
+WordVer="$(defaults read "/Applications/Microsoft Word.app/Contents/Info.plist" CFBundleShortVersionString)"
+PkgRcpt="/var/db/receipts/com.microsoft.package.Microsoft_Word.app.plist"
+
+#Compare Outlook Version needed to install
+if [[ -e "$PkgRcpt" ]] && [[ "$WordVer" < "15.18" ]]; then 
+	echo "Word update is required"
+    exit 0
+else 
+    echo "Word update is not required"
+	exit 1
+fi

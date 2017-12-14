@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>JunkMailPreferenceVersion</key>
+		<integer>1</integer>
+		<key>SafeSenderList</key>
+		<array>
+			<string>domain1.com</string>
+			<string>domain2.com</string>
+			<string>domain2.com</string>
+		</array>
+	</dict>
+</plist>

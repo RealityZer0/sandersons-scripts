@@ -1,0 +1,82 @@
+#!/bin/bash
+# User running script; must be root.
+SCRIPTUSER="$(whoami)"
+# Currently logged in user.
+userName="$(/usr/bin/stat -f%Su /dev/console)"
+# Location and name of plist with recovery info. .plist file extension omitted.
+authPlist="/var/root/restart.plist"
+hwForm="$(/usr/sbin/sysctl hw.model|awk '{print $2}'|tr -d \ "[0-9],")"
+#Check if laptop or desktop, exit 0 on desktop
+if [[ "$hwForm" = 'Macmini' || "$hwForm" = 'iMac' ]]; then
+  echo "Desktops not encrypted"
+  exit 0
+fi
+
+## Get the OS version
+osVers="$(/usr/bin/sw_vers -productVersion | awk -F. '{print $2}')"
+
+if [ $hwForm ~"MacBook" ]; then
+  echo "Desktops not encrypted"
+  exit 0
+fi
+
+## This first user check sees if the logged in account is already authorized with FileVault 2
+userCheck="$(fdesetup list | awk -v usrN="$userName" -F, 'index($0, usrN) {print $1}')"
+if [ "${userCheck}" != "${userName}" ]; then
+    echo "This user is not a FileVault 2 enabled user."
+    exit 3
+fi
+
+## Check to see if the encryption process is complete
+encryptCheck="$(fdesetup status)"
+statusCheck=$(echo "${encryptCheck}" | grep "FileVault is On.")
+expectedStatus="FileVault is On."
+if [ "${statusCheck}" != "${expectedStatus}" ]; then
+    echo "The encryption process has not completed."
+    echo "${encryptCheck}"
+    exit 4
+fi
+
+## Get the logged in user's password via a prompt
+echo "Prompting ${userName} for their login password."
+
+cat <<'SCRIPT' > "${TMPDIR}"authFileVault.scpt
+set currentUser to do shell script "/usr/bin/stat -f%Su /dev/console"
+
+tell application "System Events" to set fvAuth to text returned of (display dialog "Please enter login password for " & currentUser & ":" default answer "" with title "Login Password" buttons {"OK", "Cancel"} default button 1 with text and hidden answer)
+
+return fvAuth
+SCRIPT
+
+userPass=$(osascript "${TMPDIR}"authFileVault.scpt)
+
+
+
+if [[ ! "$userPass" ]]; then
+    echo "User cancelled or blank password."
+    exit 1
+fi
+
+
+echo "Beginning Authorized restart"
+/usr/bin/pmset -a destroyfvkeyonstandby 0
+
+if [[ $osVers -ge 9  ]]; then
+    ## This "expect" block will populate answers for the fdesetup prompts that normally occur while hiding them from output
+    expect -c "
+    log_user 0
+    spawn fdesetup authrestart
+    expect \"Enter a password for '/', or the recovery key:\"
+    send "{${userPass}}"
+    send \r
+    log_user 1
+    expect eof
+    " | sed 1d > "${authPlist}"
+    rm -f "${authPlist}"
+else
+    echo "OS version not 10.9+ or OS version unrecognized"
+    echo "$(/usr/bin/sw_vers -productVersion)"
+    exit 5
+fi
+
+exit 0

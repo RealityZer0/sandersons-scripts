@@ -1,0 +1,114 @@
+#Export
+defaults export -app /Applications/Microsoft\ Outlook.app ~/Desktop/safesenders.plist
+#Check for Safe Senders
+UserName="$(ls -la /dev/console | awk '{print $3}')"
+SafeSenders="$(defaults read /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList)"
+if [ -z $SafeSenders ];then
+#Write to SafeSenders 
+#defaults write -app "/Applications/Microsoft Outlook" JunkMailSafeSenderList -array-add '<dict><key>SafeSenderList</key><array><string>mail1.us4.mandrillapp.com</string><string>mail5.us4.mandrillapp.com</string></array></dict>'
+
+
+BAD!!!!
+JunkMailSafeSenderList =     (
+                {
+            JunkMailPreferenceVersion = 1;
+            SafeSenderList =             (
+                "mail1.us4.mandrillapp.com",
+                "mail5.us4.mandrillapp.com"
+            );
+        }
+    );
+GOOD!!!
+JunkMailSafeSenderList =     {
+        JunkMailPreferenceVersion = 1;
+        SafeSenderList =         (
+            "mail1.us4.mandrillapp.com",
+            "mail5.us4.mandrillapp.com"
+        );
+    };
+
+
+defaults write /Users/<USER>/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -array-add '<key>SafeSenderList</key><array><string>mail1.us4.mandrillapp.com</string><string>mail5.us4.mandrillapp.com</string></array>'
+
+
+JunkMailSafeSenderList = Dict {
+        SafeSenderList = Array {
+            mail1.us4.mandrillapp.com
+            mail5.us4.mandrillapp.com
+        }
+        JunkMailPreferenceVersion = 1
+    }
+
+/usr/libexec/PlistBuddy -c "Print" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList dict" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList:JunkMailPreferenceVersion integer 1" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList:SafeSenderList array" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList dict" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList:JunkMailPreferenceVersion integer 1" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList:SafeSenderList array" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Merge '/Users/sa8678/Desktop/MailChimp_Domains.xml' :JunkMailSafeSenderList" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+
+/usr/libexec/PlistBuddy -c "Import /Users/sa8678/Desktop/MailChimp_Domains.xml :SafeSenderList" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+/usr/libexec/PlistBuddy -c "Import /Users/sa8678/Desktop/MailChimp_Domains.xml" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+
+
+/usr/libexec/PlistBuddy -c "Add :JunkMailSafeSenderList:SafeSenderList:'' string 'mail1.us4.mandrillapp.com'" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+
+/usr/libexec/PlistBuddy -c "Merge ./AppInfo.plist :XCInfoPlist" ArchiveInfo.plist
+/usr/libexec/PlistBuddy -c "Copy :XCInfoPlist:CFBundleIdentifier :CFBundleIdentifier" ArchiveInfo.plist
+
+
+
+#THIS WORKS
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -dict-add JunkMailPreferenceVersion -int 1 
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -array-add SafeSendersList -string "mail1.us4.mandrillapp.com"
+
+defaults write "/Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist" JunkMailSafeSenderList -array-add '<dict><key>SafeSenderList</key><array><string>mail1.us4.mandrillapp.com</string><string>mail5.us4.mandrillapp.com</string></array></dict>'
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -dict-add '{JunkMailPreferenceVersion = 1}'
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -dict-add JunkMailPreferenceVersion -dict SafeSenderList -string "mail1.us4.mandrillapp.com"
+
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -dict-add '<dict><key>JunkMailPreferenceVersion</key><integer>1</integer></dict>' 
+defaults write /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist JunkMailSafeSenderList -array-add '<dict><key>SafeSenderList</key><array><string>mail1.us4.mandrillapp.com</string><string>mail5.us4.mandrillapp.com</string></array></dict>'
+
+
+sudo /usr/libexec/PlistBuddy -c "Import :JunkMailSafeSenderList:SafeSenderList '/Users/sa8678/Desktop/MailChimp_Domains.xml'" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+
+
+#THIS IS WHAT WORKED IN THE END
+#plist buddy will not overwrite existing keys!
+#http://superuser.com/questions/291546/global-keyboard-shortcut-to-open-a-tab-in-chrome-on-mac-os-x
+plutil -convert xml1 /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+sudo /usr/libexec/PlistBuddy -c "Merge '/Users/sa8678/Desktop/MailChimp_Domains.xml' :JunkMailSafeSenderList" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+sudo /usr/libexec/PlistBuddy -c "Delete :JunkMailSafeSenderList:SafeSenderList" /Users/sa8678/Library/Containers/com.microsoft.Outlook/Data/Library/Preferences/com.microsoft.Outlook.plist
+#plist format is shortened..below:
+#how to modify all text in TextMate2
+#http://superuser.com/questions/227820/textmate-add-multiline-text-at-end-of-line
+#press command+a, press option, type <string>, move to end of all lines with command+ -> key
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>JunkMailPreferenceVersion</key>
+		<integer>1</integer>
+		<key>SafeSenderList</key>
+		<array>
+			<string>mail1.us4.mandrillapp.com</string>
+			<string>mail5.us4.mandrillapp.com</string>
+			<string>mail8.us4.mandrillapp.com</string>
+			<string>systemalerts4.mailchimp.com</string>
+			<string>mail11.us4.mandrillapp.com</string>
+			<string>mail5.mcsignup.com</string>
+			<string>mail22.us4.mandrillapp.com</string>
+			<string>mail36.us4.mandrillapp.com</string>
+			<string>mail57.us4.mandrillapp.com</string>
+			<string>mail100.us4.mandrillapp.com</string>
+			<string>mail112.us4.mandrillapp.com</string>
+			<string>mail114.us4.mandrillapp.com</string>
+			<string>mail124.us4.mandrillapp.com</string>
+			<string>mail1.us4.mcsv.net</string>
+		</array>
+	</dict>
+</plist>
+
+
+

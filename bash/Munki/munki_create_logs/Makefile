@@ -11,7 +11,7 @@ ASSET="CreateMunkiLogs"
 
 PAYLOAD= \
 	pack-script-postinstall \
-	pack-yp-munkilogs
+	pack-munkilogs
 
 pack-munkilogs:
 	@sudo mkdir -p ${WORK_D}${DEST}

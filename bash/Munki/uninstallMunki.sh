@@ -39,4 +39,4 @@ pkgutil --forget com.googlecode.munki.admin
 pkgutil --forget com.googlecode.munki.app
 pkgutil --forget com.googlecode.munki.core
 pkgutil --forget com.googlecode.munki.launchd
-pkgutil --forget com.yp.YP_Munki_Additions_FULL
+pkgutil --forget com.domain.Munki_Additions_FULL

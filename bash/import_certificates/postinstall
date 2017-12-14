@@ -1,0 +1,28 @@
+#!/bin/bash
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+
+USERNAME="$(ls -l /dev/console | awk '{print $3}')"
+TmpDest="/tmp/certs"
+CertPath="/Library/Certificates"
+IntCertPath="/Library/Certificates/Intermediate"
+RootCertPath="/Library/Certificates/Root"
+
+rm -rf $CertPath
+mkdir -p $CertPath
+chown -Rv root:wheel "$CertPath"/
+tar -xyf $TmpDest/certs.bz2 -C $CertPath &>/dev/null
+
+for intcert in "$IntCertPath"/*
+ do
+	 security add-trusted-cert -d -r trustAsRoot -k "/Library/Keychains/System.keychain" "$intcert"
+ done 
+ 
+for rtcert in "$RootCertPath"/*
+ do
+	 security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" "$rtcert"
+ done
+  
+ rm -rf $TmpDest
+ exit 0

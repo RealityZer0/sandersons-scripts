@@ -1,0 +1,33 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: MunkiAdditions
+# SYNOPSIS:
+#==========#
+# HISTORY:
+# Version 3.4.3
+# Created by Heig Gregorian
+# Revised by Scott Anderson
+# Revision Date 10/13/16
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# VARIABLES
+#==========#
+BASEURL="http://munki.domain.com"
+SUBMITURL="${BASEURL}/update"
+
+RUNTYPE="$1"
+if [ -z "$RUNTYPE" ]; then
+    RUNTYPE="reportbrokenclient"
+fi
+MAC="$(ifconfig en0 | awk '$1=="ether" {print $2}')"
+NAME="$(/usr/sbin/scutil --get ComputerName)"
+
+curl --max-time 5 --silent \
+    -d runtype="$RUNTYPE" \
+    -d mac="$MAC" \
+    -d name="$NAME" \
+    "$SUBMITURL/report_broken_client"
+
+exit 0
