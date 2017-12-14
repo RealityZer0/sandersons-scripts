@@ -3,14 +3,14 @@ pkgName="DefaultAdmin"
 pkgVersion="1.0"
 domain="domain"
 identifier="com.${domain}.${pkgName}"
-
+tmpDir="/private/tmp/defaultadmin/"
 PATH=/usr/bin:/bin:/usr/sbin:/sbin export PATH
 
 projectfolder=$(dirname $0)
 
-pkgbuild --root "${projectfolder}/payload" \
---install-location "/" --scripts "${projectfolder}/scripts" --identifier "${identifier}" \
---ownership recommended --version "${pkgVersion}" "${projectfolder}/${pkgName}-${pkgVersion}.pkg"
+pkgbuild --root payload --install-location / \
+--scripts scripts --identifier "${identifier}" \
+--version "${pkgVersion}" "${pkgName}-${pkgVersion}.pkg"
 
 #productbuild --package "${pkgName}".pkg "${pkgName}"-"${pkgVersion}".pkg
 #rm "${pkgName}".pkg

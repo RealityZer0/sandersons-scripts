@@ -1,0 +1,39 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: DefaultAdmin
+# SYNOPSIS: This script will create the local admin account
+#==========#
+# HISTORY:
+# Version 1.7
+# Created by Scott Anderson on 11/09/16
+# Revision Date
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+source="/private/tmp/defaultadmin"
+adminChk="$(dscl . -read /Users/${madmin_USER} | grep RealName | awk '{print $2}')" &>/dev/null
+madmin_USER="admin"
+
+#==========#
+# COMMANDS
+#==========#
+# Check for existing admin account. Delete if exists
+# Safer than sending passwords to change keychain and password in the clear
+if [[ "${adminChk}" = "${madmin_USER}" ]]; then
+  madminGUID="$(dscl . -read /Users/${madmin_USER} GeneratedUID | awk '{print $2}')"
+  dseditgroup -o edit -d "${madmin_USER}" -t user admin
+  dscl . -delete /Groups/admin GroupMembership "${madmin_USER}"
+  dscl . -delete /Groups/admin GroupMembers "${madminGUID}"
+  dscl . -delete /Users/${madmin_USER}
+  rm -rf /var/home/"${madmin_USER}"
+fi
+
+exit 0
