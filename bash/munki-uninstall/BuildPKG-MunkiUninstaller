@@ -1,0 +1,37 @@
+#!/bin/sh
+#==========#
+# ABOUT THIS SCRIPT: Build package and dmg via pkgbuild command
+# NAME: BuildPKG-MunkiUninstaller
+# SYNOPSIS: Build Munki uninstaller package via pkgbuild command. Create disk image post package creation
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson
+# Creation Date 12/12/17
+#==========#
+# ADDITIONAL INFO:
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+#==========#
+# VARIABLES
+#==========#
+pkgName="MunkiUninstaller"
+pkgVersion="1.0"
+source="/private/var/tmp/MunkiUninstaller"
+domain="domain"
+#==========#
+# COMMANDS
+#==========#
+pkgbuild --root payload --install-location ${source} \
+--scripts scripts --identifier com.${domain}.${pkgName} \
+--version ${pkgVersion} ${pkgName}-${pkgVersion}.pkg
+
+hdiutil create \
+-volname ${pkgName}-${pkgVersion} \
+-srcfolder ${pkgName}-${pkgVersion}.pkg \
+-ov \
+${pkgName}-${pkgVersion}.dmg
+#rm -f ${pkgName}-${pkgVersion}.pkg # Remove comment if .pkg is also required for testing

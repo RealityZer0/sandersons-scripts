@@ -1,0 +1,72 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Uninstall Munki
+# SYNOPSIS: Uninstall all files/folders involving Munki.
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 12/12/17
+# Revision Date
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki
+export PATH
+#==========#
+# VARIABLES
+#==========#
+TARGET_VOL="$3"
+LibLD="/Library/LaunchDaemons"
+LibLA="/Library/LaunchAgents"
+LibMI="/Library/Managed Installs"
+miPref="/Library/Preferences/ManagedInstalls.plist"
+munkiDir="/usr/local/munki"
+munkiHC="/usr/local/corp/munkihc"
+munkiEtc="/etc/paths.d/munki"
+munkiApp="/Applications/Managed Software Center.app"
+cryptDir="/usr/local/crypt"
+#==========#
+# COMMANDS
+#==========#
+# Remove munki directories and files
+rm -f "${LibLD}"/com.googlecode.munki.* 2>/dev/null
+rm -f "${LibLA}"/com.googlecode.munki.* 2>/dev/null
+rm -rf "${LibMI}" 2>/dev/null
+rm -f "${miPref}" 2>/dev/null
+rm -rf "${munkiDir}" 2>/dev/null
+rm -f "${munkiEtc}" 2>/dev/null
+rm -rf "${munkiApp}" 2>/dev/null
+
+# Uninstall crypt app
+rm -rf "${cryptDir}"
+
+# Stop and uninstall Munki Health check
+rm -f "$LibLD"/"${munkiHCLD}"
+chflags -f noschg "${munkiHC}"
+rm -f "${munkiHC}"
+# Forget munki pkg receipts
+pkgForget=(
+  com.googlecode.munki.admin
+  com.googlecode.munki.app
+  com.googlecode.munki.core
+  com.googlecode.munki.launchd
+  com.googlecode.munki.munki-notifier
+  com.googlecode.munki.ManagedSoftwareCenter
+  com.googlecode.munki.app_usage
+  com.yp.munkihealthcheck
+  com.yp.YPReposadoSUS
+  com.grahamgilbert.Crypt_Client
+)
+
+for pkgid in ${pkgForget[@]}; do
+       pkgutil --forget "${pkgid}" 2>&1
+done
+
+# Reset App Catalog URL to defaults
+YPSUS="http://asus.corp.yp.com/index.sucatalog"
+CatURL="$(defaults read /Library/Preferences/com.apple.SoftwareUpdate.plist CatalogURL)"
+if [[ ! -z ${CatURL} ]]; then
+  echo "CatalogURL not default"
+  defaults delete /Library/Preferences/com.apple.SoftwareUpdate.plist CatalogURL
+fi
