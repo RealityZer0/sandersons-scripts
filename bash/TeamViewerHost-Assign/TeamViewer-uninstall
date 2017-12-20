@@ -1,0 +1,46 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Uninstall Munki
+# SYNOPSIS: Uninstall all files/folders involving Munki.
+#==========#
+# HISTORY:
+# Version 1.0
+# Created by Scott Anderson on 12/12/17
+# Revision Date
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+#==========#
+# VARIABLES
+#==========#
+TARGET_VOL="$3"
+LibLD="/Library/LaunchDaemons"
+LibLA="/Library/LaunchAgents"
+LibAS="/Library/Application Support"
+
+pkgForget=(
+  com.yp.TeamViewerHost
+  com.teamviewer.teamviewer12AuthPlugin
+  com.teamviewer.teamviewer12PriviledgedHelper
+  com.teamviewer.teamviewerhost12
+  com.teamviewer.teamviewerhost12Agent
+  com.teamviewer.teamviewerhost12Font
+  com.teamviewer.teamviewerhost12Restarter
+)
+#==========#
+# COMMANDS
+#==========#
+launchctl unload ${LibLD}/com.teamviewer.Helper.plist
+launchctl unload ${LibLD}/com.teamviewer.teamviewer_service.plist
+rm -rf ${LibAS}/TeamViewer Host/
+rm -rf ${LibAS}/Applications/TeamViewerHost.app
+rm -rf ${LibLD}/com.teamviewer.*
+
+for pkgid in ${pkgForget[@]}; do
+       pkgutil --forget "${pkgid}" 2>&1
+done
+
+exit 0
