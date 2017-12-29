@@ -1,0 +1,36 @@
+#!/bin/bash
+#==========#
+# ABOUT THIS SCRIPT:
+# NAME: Munki Health Check remove
+# SYNOPSIS: This will run as a local LaunchDaemon
+# exit status not 0 means no installation necessary
+#==========#
+# HISTORY:
+# Version 1.2
+# Created by Scott Anderson on 8/22/2016
+# Revision Date 12/29/2017
+#==========#
+# PATH
+#==========#
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+#==========#
+# VARIABLES
+#==========#
+LibLD="/Library/LaunchDaemons"
+asset1="com.yp.corp.macstats-update.plist"
+ULC="/usr/local/corp"
+#==========#
+# COMMANDS
+#==========#
+# Unload launchdaemon
+if [[ -e "${LibLD}"/"${asset1}" ]]; then
+	msproc="$(launchctl list | awk '/com.yp.corp.macstats-update/ {print $3}')"
+	if [ "${msproc}" = "com.yp.corp.macstats-update" ];then
+		launchctl stop "${LibLD}"/"${asset1}" 2>/dev/null
+		launchctl unload "${LibLD}"/"${asset1}" 2>/dev/null
+	fi
+
+fi
+
+exit 0
