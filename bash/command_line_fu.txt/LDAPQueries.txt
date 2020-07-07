@@ -1,0 +1,16 @@
+ldapsearch -v -H ldap://lzldap.legalzoom.com -x -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" -W -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" "(&(objectClass=user)(cn=psachdeva))" memberOf
+
+ldapsearch -v -H ldap://lzldap.legalzoom.com -x -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" -W -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" "(&(objectClass=user)(cn=psachdeva))" memberOf
+
+
+ldapsearch domain="legalzoom.com" search=(&(objectClass=group)("CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com")) attrs="member"
+
+ldapsearch domain="legalzoom.com" (&(objectClass=user)(memberof:1.2.840.113556.1.4.1941:=CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com) 
+
+
+ldapsearch -LLL -H ldap://lzldap.legalzoom.com -x -b 'CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com' '(objectclass=*)' memberOf
+
+ldapsearch -v -H ldap://lzldap.legalzoom.com -x -D "CN=Scott Anderson,OU=Employees,OU=People,DC=legalzoom,DC=com" -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" -W  "(&(objectClass=user)(cn=sanderson))" memberOf
+
+ldapsearch -v -H ldaps://lzldap.legalzoom.com -x -D "CN=Scott Anderson,OU=Employees,OU=People,DC=legalzoom,DC=com" -b "CN=Neo4j - PROD - Admin,OU=Roles,OU=Groups,DC=legalzoom,DC=com" -W  "(&(objectClass=user)(cn=psachdeva))" memberOf
+
