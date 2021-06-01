@@ -28,25 +28,32 @@ export PATH
 UserName="$(ls -la /dev/console | awk '{print $3}')"
 Today=$(date "+%m%d%Y")
 Time=$(date "+%H%M%S")
-ARD_bup="$3/Users/$UserName/dev/Projects/Resources/ARD_BUP/$Today$Time-ARDBackup"
+ARD_bup="$3/Users/${UserName}/dev/eus-projects-mac/ardBup/Archives/$Today$Time-ARDBackup"
 ARD_db="/var/db/RemoteManagement"
 ARD_lib="/Library/Preferences/com.apple.RemoteDesktop.plist"
 ARD_remMgmt="/Library/Preferences/com.apple.remoteManagement.plist"
-#ARD_usr="/Users/$UserName/Library/Preferences/com.apple.RemoteDesktop.plist"
+ARD_usr="/Users/${UserName}/Library/Containers/com.apple.RemoteDesktop/Data/Library/Preferences/com.apple.RemoteDesktop.plist"
 ARD_appsprt="/Library/Application Support/Apple/Remote Desktop/"
 #ARD_usr_appsprt="/Users/$UserName/Library/Application Support/Remote Desktop/"
 ARD_agentPrefs="/Library/Preferences/com.apple.ARDAgent.plist"
 #==========#
 killall "Remote Desktop"
-mkdir -p $3/Users/$UserName/dev/Projects/Resources/ARD_BUP/$Today$Time-ARDBackup
-rsync -avzR "$ARD_db" "$ARD_bup"
+mkdir -p "${ARD_bup}/var/db/RemoteManagement"
+cp -pR "${ARD_db}" "${ARD_bup}/var/db/RemoteManagement"
 sleep 2
-rsync -avzR "$ARD_lib" "$ARD_bup"
+mkdir -p "${ARD_bup}/Library/Preferences/"
+cp -pR "${ARD_lib}" "${ARD_bup}/Library/Preferences/"
 sleep 2
-#rsync -avzR "$ARD_usr" "$ARD_bup"
-#sleep 2
-rsync -avzR "$ARD_appsprt" "$ARD_bup"
+mkdir -p "${ARD_bup}/Library/Preferences/"
+cp -pR "${ARD_remMgmt}" "${ARD_bup}/Library/Preferences/"
 sleep 2
-#rsync -avzR "$ARD_usr_appsprt" "$ARD_bup"
-#sleep 2
+mkdir -p "${ARD_bup}/Users/${UserName}/Library/Containers/com.apple.RemoteDesktop/Data/Library/Preferences/"
+cp -pR "${ARD_usr}" "${ARD_bup}/Users/${UserName}/Library/Containers/com.apple.RemoteDesktop/Data/Library/Preferences/"
+sleep 2
+mkdir -p "${ARD_bup}/Library/Application Support/Apple/Remote Desktop/"
+cp -pR "${ARD_appsprt}" "${ARD_bup}/Library/Application Support/Apple/Remote Desktop/"
+sleep 2
+mkdir -p "${ARD_bup}/Library/Preferences/"
+cp -pR "${ARD_agentPrefs}" "${ARD_bup}/Library/Preferences/"
+sleep 2
 echo "Copy complete."
